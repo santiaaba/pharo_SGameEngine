@@ -15,6 +15,12 @@ EngineEventHandle >> setEngine: anEngine [
 ]
 
 { #category : 'visiting' }
+EngineEventHandle >> visitKeyDownEvent: anEvent [
+
+	engine onKeyPressEvent: anEvent.
+]
+
+{ #category : 'visiting' }
 EngineEventHandle >> visitWindowCloseEvent: anEvent [
 
 	engine stop

@@ -17,7 +17,6 @@ GameDemo1 class >> start [
 { #category : 'as yet unclassified' }
 GameDemo1 >> gameLogic [
 
-	player1 move: 1@1.
 ]
 
 { #category : 'initialization' }
@@ -30,4 +29,13 @@ GameDemo1 >> initialize [
 	player1 setPosition: 10@10.
 	layer := Layer new.
 	scene addLayer: layer; add: player1 intoLayer:1.
+]
+
+{ #category : 'as yet unclassified' }
+GameDemo1 >> onKeyPressEvent: anEvent [
+
+	(anEvent scanCode = 82 ) ifTrue: [ player1 move: 0@(-2) ].
+	(anEvent scanCode = 81 ) ifTrue: [ player1 move: 0@2 ].
+	(anEvent scanCode = 79 ) ifTrue: [ player1 move: 2@0 ].
+	(anEvent scanCode = 80 ) ifTrue: [ player1 move: -2@0 ].
 ]

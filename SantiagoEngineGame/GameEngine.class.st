@@ -40,6 +40,12 @@ GameEngine >> initialize [
 	window eventHandler: (EngineEventHandle new setEngine: self).
 ]
 
+{ #category : 'as yet unclassified' }
+GameEngine >> onKeyPressEvent: anEvent [
+
+	self subclassResponsibility.
+]
+
 { #category : 'accessing' }
 GameEngine >> renderer [
 
@@ -54,14 +60,21 @@ GameEngine >> setScene: aScene [
 
 { #category : 'accessing' }
 GameEngine >> start [
+	"Bucle principal del juego"
 
-	[  stop ] whileFalse: [
+	[ stop ] whileFalse: [
+		"Capturamos eventos de los dispositivos de entrada"
+		
+		
+		"Aplicamos la lógica del juego"
 		self gameLogic.
+		
+		"Dibujamos el frame"
 		renderer color: Color white; clear.
 		scene redraw: renderer.
 		renderer present.
 		(Delay forMilliseconds: 33) wait 
-	 ]
+	]
 ]
 
 { #category : 'accessing' }
