@@ -15,6 +15,12 @@ Layer >> add: anEntity [
 	entities add: anEntity.
 ]
 
+{ #category : 'accessing' }
+Layer >> entities [
+
+	^ entities.
+]
+
 { #category : 'initialization' }
 Layer >> initialize [
 

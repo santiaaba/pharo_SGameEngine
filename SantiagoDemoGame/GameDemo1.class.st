@@ -1,6 +1,6 @@
 Class {
 	#name : 'GameDemo1',
-	#superclass : 'GameEngine',
+	#superclass : 'GameEnginePlatform',
 	#instVars : [
 		'player1'
 	],
@@ -34,8 +34,15 @@ GameDemo1 >> initialize [
 { #category : 'as yet unclassified' }
 GameDemo1 >> onKeyPressEvent: anEvent [
 
-	(anEvent scanCode = 82 ) ifTrue: [ player1 move: 0@(-2) ].
-	(anEvent scanCode = 81 ) ifTrue: [ player1 move: 0@2 ].
-	(anEvent scanCode = 79 ) ifTrue: [ player1 move: 2@0 ].
-	(anEvent scanCode = 80 ) ifTrue: [ player1 move: -2@0 ].
+	"Arriba"
+	(anEvent scanCode = 82 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(Float halfPi + Float pi))].
+	
+	"Abajo"
+	(anEvent scanCode = 81 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(Float halfPi))].
+	
+	"Derecha"
+	(anEvent scanCode = 79 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(0))].
+	
+	"Izquierda"
+	(anEvent scanCode = 80 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(Float pi))].
 ]

@@ -17,6 +17,25 @@ GameEngine class >> debug: aBoolean [
 	Entity debug: aBoolean
 ]
 
+{ #category : 'accessing' }
+GameEngine >> doing [
+	"Se realizan todas las acciones necesarias para
+	 un frma del juego"
+	
+	"Capturamos eventos de los dispositivos de entrada"
+			
+	"Aplicamos la lógica del juego"
+	self gameLogic.
+	
+	"Movemos las entidades"
+	scene layers do:[ :layer | layer entities do:[ :entity | entity do] ].
+	
+	"Dibujamos el frame"
+	renderer color: Color white; clear.
+	scene redraw: renderer.
+	renderer present.
+]
+
 { #category : 'as yet unclassified' }
 GameEngine >> gameLogic [
 
@@ -60,20 +79,10 @@ GameEngine >> setScene: aScene [
 
 { #category : 'accessing' }
 GameEngine >> start [
-	"Bucle principal del juego"
 
 	[ stop ] whileFalse: [
-		"Capturamos eventos de los dispositivos de entrada"
-		
-		
-		"Aplicamos la lógica del juego"
-		self gameLogic.
-		
-		"Dibujamos el frame"
-		renderer color: Color white; clear.
-		scene redraw: renderer.
-		renderer present.
-		(Delay forMilliseconds: 33) wait 
+		self doing.
+		(Delay forMilliseconds: 33) wait.
 	]
 ]
 

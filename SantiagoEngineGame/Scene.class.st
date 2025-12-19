@@ -5,7 +5,8 @@ Class {
 		'layers',
 		'ground',
 		'player',
-		'camera'
+		'camera',
+		'gravity'
 	],
 	#category : 'SantiagoEngineGame',
 	#package : 'SantiagoEngineGame'
@@ -37,6 +38,13 @@ Scene >> initialize [
 
 	layers := OrderedCollection new.
 	camera := Camera new.
+	gravity := Vector module: 0 direction: 0.
+]
+
+{ #category : 'accessing' }
+Scene >> layers [
+
+	^layers
 ]
 
 { #category : 'private' }
@@ -80,6 +88,12 @@ Scene >> saveOn: arg1 [
 	tmp1 position: 1.
 	(layers at: 1) do: [ :arg2 | arg2 save: tmp1 ].
 	tmp1 close
+]
+
+{ #category : 'initialization' }
+Scene >> setGravity: aVector [
+
+	gravity := aVector.
 ]
 
 { #category : 'initialization' }

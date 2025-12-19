@@ -1,3 +1,10 @@
+"
+Represento las características más generales de una entidad.
+
+###Dirección
+Es un vector que indica la dirección y velocidad a la que se mueve la entidad. El vector
+puede verse afectado por otros vectores como por ejemplo la fuerza de gravedad.
+"
 Class {
 	#name : 'Entity',
 	#superclass : 'Object',
@@ -36,6 +43,14 @@ Entity class >> new: aTexture render: aRenderer [
 	^ self new setTexture: aTexture with: aRenderer
 ]
 
+{ #category : 'initialization' }
+Entity >> addDirection: aVector [
+	"Suma a la dirección actual de la entidad un nuevo vector
+	 dirección"
+	
+	direction := direction + aVector.
+]
+
 { #category : 'accessing' }
 Entity >> boundary [
 
@@ -49,7 +64,10 @@ Entity >> do [
 	"Representa un conjunto de acciones que la entidad ha
 	 de realizar en el fotograma actual el juego"
 	
-	position := (position addVector: gravity) addVector: direction
+	| newPoint |
+	newPoint := gravity movePoint: position.
+	newPoint := direction movePoint: newPoint.
+	position := newPoint.
 ]
 
 { #category : 'as yet unclassified' }
