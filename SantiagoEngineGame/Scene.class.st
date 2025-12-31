@@ -62,12 +62,6 @@ Scene >> loadFrom: arg1 [
 			ifFalse: [ (layers at: 1) add: (StaticEntity new load: tmp1) ] ]
 ]
 
-{ #category : 'as yet unclassified' }
-Scene >> moveCamera: aPoint [
-
-	camera position: aPoint
-]
-
 { #category : 'accessing' }
 Scene >> player [
 
@@ -100,4 +94,10 @@ Scene >> setGravity: aVector [
 Scene >> setPlayer: anEntity [
 
 	player := anEntity
+]
+
+{ #category : 'as yet unclassified' }
+Scene >> translateCameraBy: factor [
+	"Mueve la cámara aplicando un factor que viene por parámetro"
+	camera translateBy: factor
 ]

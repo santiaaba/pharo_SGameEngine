@@ -60,14 +60,18 @@ Entity >> boundary [
 
 { #category : 'undo - undo' }
 Entity >> do [
-
 	"Representa un conjunto de acciones que la entidad ha
-	 de realizar en el fotograma actual el juego"
+	 de realizar en el fotograma actual el juego. Retorna true
+	 si ha cambiado su posición"
 	
 	| newPoint |
 	newPoint := gravity movePoint: position.
 	newPoint := direction movePoint: newPoint.
-	position := newPoint.
+	(position = newPoint) ifFalse: [
+		position := newPoint.
+		^true.
+	].
+	^false.
 ]
 
 { #category : 'as yet unclassified' }

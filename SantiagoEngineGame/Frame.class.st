@@ -1,5 +1,11 @@
 "
-Soy un fram de una animación. Represento un cuadro de animación. Indico la sección de sprite a recortar de la textura. Mi atributo collider indica mediante el objeto Collider, cuales son mis secciones a detectar colisiones.
+Soy un fram de una animación. Represento un cuadro de animación.
+
+## RectDelta
+Ofrezco tanto el rectángulo de recorte en el sprite como lo necesario para calcular el rectángulo donde pegarlo en el screen. Para ello tengo un rectDelta. Del mismo obtengo el rectángulo que es la zona de recorte en el sprite. El delta determina la posición relativa del mismo rectángulo en base a la posición de la entidad en la escena.
+
+## Colider
+Mi atributo collider indica mediante el objeto Collider, cuales son mis secciones a detectar colisiones.
 "
 Class {
 	#name : 'Frame',
@@ -16,6 +22,18 @@ Class {
 Frame >> collider [
 
 	^ collider
+]
+
+{ #category : 'accessing' }
+Frame >> getRectDelta [
+
+	^ rectCut
+]
+
+{ #category : 'accessing' }
+Frame >> getRectTranslateTo: aPoint [
+
+	^ rectCut getRectTranslateTo: aPoint
 ]
 
 { #category : 'initialization' }
@@ -37,18 +55,6 @@ Frame >> load: arg1 [
 	rectCut origin: tmp1 corner: tmp2
 ]
 
-{ #category : 'accessing' }
-Frame >> rectCut [
-
-	^ rectCut
-]
-
-{ #category : 'as yet unclassified' }
-Frame >> rectCut: aSDLRect delta: aPointer [
-
-	rectCut := RectDelta rect: aSDLRect delta: aPointer
-]
-
 { #category : 'actions' }
 Frame >> save: arg1 [
 
@@ -57,4 +63,10 @@ Frame >> save: arg1 [
 		nextPutAll: rectCut origin y asFloat asIEEE32BitWord asByteArray;
 		nextPutAll: rectCut corner x asFloat asIEEE32BitWord asByteArray;
 		nextPutAll: rectCut origin y asFloat asIEEE32BitWord asByteArray
+]
+
+{ #category : 'as yet unclassified' }
+Frame >> setRectDelta: aRectDelta [
+
+	rectCut := aRectDelta.
 ]

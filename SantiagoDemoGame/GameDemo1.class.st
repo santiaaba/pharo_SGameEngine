@@ -22,13 +22,18 @@ GameDemo1 >> gameLogic [
 { #category : 'initialization' }
 GameDemo1 >> initialize [ 
 
-	| layer|
+	| layer ground|
 	super initialize.
 	player1 := StaticEntity new: 'character1.png' render: renderer.
-	player1 rectCut: (Rectangle origin: 210@36 corner: 323@326) delta: 0@0.
-	player1 setPosition: 10@10.
+	player1 rectCut: (Rectangle origin: 210@36 corner: 323@326) delta: (-56)@(-145).
+	player1 setPosition: 100@100.
+	ground := StaticEntity new: 'grounds.jpg' render: renderer.
+	ground rectCut: (Rectangle origin: 0@2152 corner: 5004@2751) delta: (0)@(0).
+	ground setPosition:(0,300).
 	layer := Layer new.
-	scene addLayer: layer; add: player1 intoLayer:1.
+	scene addLayer: layer;
+		add: ground intoLayer: 1;
+		add: player1 intoLayer:1.
 ]
 
 { #category : 'as yet unclassified' }

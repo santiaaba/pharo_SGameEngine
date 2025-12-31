@@ -1,3 +1,11 @@
+"
+##Renderizado
+Queremos que se pueda renderizar tan rápido como se pueda hasta una taza máxima de 120 frames por segundo. Pero que con ellono se afecte la velocidad de la lógica o las animaciones de los sprite.
+
+Es decir... que la lógica y animación de los sprite debe ir a un tiempo constante más allá de la velocidad a la que se renderiza la esena.
+
+Para ello nos valemos del deltaTime. Un atributo de la clase GameEngine que tiene como propósito informar a todo el Engine el tiempo promedio que está transcurriendo entre frame y frame.
+"
 Class {
 	#name : 'GameEngine',
 	#superclass : 'Object',
@@ -7,6 +15,10 @@ Class {
 		'renderer',
 		'window'
 	],
+	#classInstVars : [
+		'debug',
+		'deltaTime'
+	],
 	#category : 'SantiagoEngineGame',
 	#package : 'SantiagoEngineGame'
 }
@@ -14,7 +26,20 @@ Class {
 { #category : 'start' }
 GameEngine class >> debug: aBoolean [
 
+	debug := aBoolean.
 	Entity debug: aBoolean
+]
+
+{ #category : 'accessing' }
+GameEngine class >> deltaTime [
+
+	^deltaTime
+]
+
+{ #category : 'initialization' }
+GameEngine class >> setDeltaTime: aMilliseconds [
+
+	deltaTime := aMilliseconds.
 ]
 
 { #category : 'accessing' }
@@ -54,6 +79,7 @@ GameEngine >> initialize [
 		windowCentered: true.
 	window := OSWindowAnimated createWithAttributes: windowAttr.
 	renderer := window newGenericRenderer.
+	renderer useCompositeAlphaBlending.
 	scene := Scene new.
 	stop := false.
 	window eventHandler: (EngineEventHandle new setEngine: self).
@@ -71,6 +97,13 @@ GameEngine >> renderer [
 	^ renderer
 ]
 
+{ #category : 'accessing' }
+GameEngine >> scene [
+	"Retorna el Objeto escena"
+	
+	^scene.
+]
+
 { #category : 'initialization' }
 GameEngine >> setScene: aScene [
 
@@ -79,10 +112,20 @@ GameEngine >> setScene: aScene [
 
 { #category : 'accessing' }
 GameEngine >> start [
+	"Comienza y mantiene el loop del juego hasta
+	 que se indique con stop lo contrario"
 
+	| d |
 	[ stop ] whileFalse: [
+		d := Time now asMilliSeconds.
 		self doing.
-		(Delay forMilliseconds: 33) wait.
+		self class setDeltaTime: Time now asMilliSeconds - d.
+		Transcript show: self class deltaTime; cr.
+		
+		" El límite de FPS lo fijamos en 120"
+		(self class deltaTime < 9) ifTrue: [
+			(Delay forMilliseconds: 9) wait.
+		]
 	]
 ]
 

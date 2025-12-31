@@ -23,8 +23,8 @@ Vector >> + anotherVector [
 	
 	| ax bx ay by cx cy d v|
 	
+	(anotherVector module = 0) ifTrue: [ ^self ].
 	(module = 0) ifTrue: [ ^ anotherVector ].
-	(anotherVector module = 0) ifTrue: [  ^self ].
 	
 	ax := module * (direction cos).
 	ay := module * (direction sin).
@@ -37,14 +37,28 @@ Vector >> + anotherVector [
 	  y módulo se calculan de distinta forma"
 	
 	(cx = 0) ifTrue: [
-		d:= (cy>=0)ifTrue:[^Float halfPi] ifFalse:[^Float halfPi + Float pi].
+		(cy>=0)ifTrue:[d := Float halfPi] ifFalse:[d := Float halfPi + Float pi].
 		v := cy.
 	] ifFalse: [
 		d := (cy / cx) arcTan.
-		(d < 0) ifTrue: [ d := Float pi + d ].
+		(cx < 0) ifTrue:[
+			d := d + Float pi.
+		] ifFalse: [
+			(cy < 0) ifTrue: [ d := d + Float twoPi ]
+		].
 		v := (((cx**2) + (cy**2)) sqrt).
 	].
 	^ Vector module: v direction: d.
+]
+
+{ #category : 'adapting' }
+Vector >> adaptToPoint: anotherPoint andSend: selector [
+	" Si el vector se ve involucrado en una operación
+	  algebraica donde el segundo parámetro es un punto,
+	  se convierte el vector en un punto para poder realizar
+	  la operación."
+	
+	^ anotherPoint perform: selector with: self toPoint.
 ]
 
 { #category : 'accessing' }
@@ -98,4 +112,13 @@ Vector >> save: arg1 [
 	arg1
 		nextPutAll: module asFloat asIEEE32BitWord asByteArray;
 		nextPutAll: direction asFloat asIEEE32BitWord asByteArray
+]
+
+{ #category : 'as yet unclassified' }
+Vector >> toPoint [
+
+	"Retorna el punto que determina el vector en
+	 representación polar"
+	
+	^(module * (direction cos))@(module * (direction sin)).
 ]

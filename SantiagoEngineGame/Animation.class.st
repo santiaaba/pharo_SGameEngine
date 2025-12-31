@@ -26,9 +26,18 @@ Animation >> boundary: aPoint [
 ]
 
 { #category : 'private - display' }
-Animation >> frame [
-
-	^ frames at: index
+Animation >> getFrame [
+	"Retorna el frame actual y al hacerlo, avanza al siguiente frame.
+	 Si loop es falso, allí se detiene. Si loop es verdadero, al llegar
+	 al último frame, regresa al primero."
+	
+	| f |
+	f := frames at: index.
+	
+	index = frames size
+		ifTrue: [ loop ifTrue: [ index := 1 ] ]
+		ifFalse: [ index := index + 1 ].
+	^f
 ]
 
 { #category : 'initialization' }

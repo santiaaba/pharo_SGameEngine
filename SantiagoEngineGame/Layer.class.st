@@ -30,8 +30,15 @@ Layer >> initialize [
 
 { #category : 'as yet unclassified' }
 Layer >> redraw: aRenderer on: aCamera [
+	"Dibuja la parte de la esena visualizada por la cámara.
+	 De momento, recorre la colección de entidades, enviado
+	 a redibujar solo aquellas donde el recuadro que circunscribe
+	 su sprite setán total o parcialmente dentro de la cámara"
 
-	entities do:[ :entity | (aCamera viewport intersects: entity boundary) ifTrue: [
+	| i |
+	entities do:[ :entity | 
+		i := aCamera viewport getRect.
+		(i intersects: entity boundary) ifTrue: [
 				entity draw: aRenderer using: aCamera
 			]]
 ]

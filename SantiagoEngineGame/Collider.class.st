@@ -14,10 +14,10 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
-{ #category : 'accessing' }
-Collider class >> position: aPoint [
+{ #category : 'instance creation' }
+Collider class >> newPosition: aPoint [
 
-	^ self new setPosition: aPoint
+	^self new setPosition: aPoint.
 ]
 
 { #category : 'as yet unclassified' }
@@ -35,10 +35,13 @@ Collider >> actualizeSectors [
 ]
 
 { #category : 'adding' }
-Collider >> addSector: aRectDelta [
+Collider >> addSectorOrigin: anOrigin corner: aCorner delta: aDelta [
+	"Agrego un sector al collider. El delta siempre se ha de considerar respecto
+	 del punto que determina la posición del collider. Generalmente vamos
+	 a desear que dicho punto concida con el de la Entity que utiliza el collider."
 
-	sectors add: aRectDelta.
-	boundary merge: aRectDelta.
+	sectors add: (RectDelta origin: anOrigin corner: aCorner delta: aDelta).
+	self recalculateBoundary.
 ]
 
 { #category : 'accessing' }
@@ -62,24 +65,34 @@ Collider >> collisionTo: arg1 [
 
 { #category : 'initialization' }
 Collider >> initialize [
-
-	boundary := RectDelta
-		            rect: (Rectangle origin: 0 @ 0 corner: 0 @ 0)
-		            delta: 0 @ 0.
+	"Inicializa la estructura del collider. A Priori su boundary
+	 es simplemente un rectángulo nulo. A medida que se van agregando
+	 secciones, el boundary va creciendo circunscribiéndu las secciones."
+	
+	boundary := nil.
 	sectors := OrderedCollection new.
-	lastPosition := 0 @ 0
+	lastPosition := 0@0
+]
+
+{ #category : 'as yet unclassified' }
+Collider >> recalculateBoundary [
+	"En base a los sectores del collider, recalcula el boundary que
+	 los circunscribe. Para ello, previamente situa todos los
+	 sectores donde corresponde según la posición del colider."
+	
+	| b |
+	b := nil.
+	sectors do: [ :s |
+		s translateTo: position.
+		b ifNil: [ b := s ] ifNotNil:[ b := b merge: s].
+	].
+	boundary := b.
 ]
 
 { #category : 'accessing' }
 Collider >> sectors [
 
 	^ sectors
-]
-
-{ #category : 'initialization' }
-Collider >> setBoundary: aRectDelta [
-
-	boundary := aRectDelta
 ]
 
 { #category : 'initialization' }

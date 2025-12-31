@@ -15,38 +15,52 @@ Class {
 StaticEntity >> boundary [
 	
 	"Retorna el rectángulo que circunscribe el sprite"
-	^ rectDraw asRectTranslated: position.
+	^ rectDraw getRect.
 ]
 
 { #category : 'undo - undo' }
 StaticEntity >> do [
-
-	super do
+	(super do) ifTrue: [
+		rectDraw translateTo: position.
+	]
 ]
 
 { #category : 'as yet unclassified' }
 StaticEntity >> draw: aRenderer using: aCamera [
-
-	aRenderer drawTexture: texture rectangle: rectCut in: (rectDraw asRectTranslated:position).
+	" Dibuja la entidad estática. La entidad posee coorenadas
+	  de la escena. Pero debe ser dibujada en el screen del renderer.
+	  Utilizamos las coordenadas de la cámara para hacer el mapeo"
 	
-	" No logro que funcione
-	debug ifTrue: [ self drawDebug: aRenderer using: aCamera andRectangle: rect]
-	"
+	| rect |
+	rectDraw translateTo: position.
+	rect := rectDraw getRect translateBy: aCamera viewport getRect origin.
+	aRenderer drawTexture: texture rectangle: rectCut in: rect.
+	Entity debug ifTrue: [ self drawDebug: aRenderer using: aCamera ]
 ]
 
 { #category : 'as yet unclassified' }
-StaticEntity >> drawDebug: aRenderer using: aCamera andRectangle: aRectangle [
-
+StaticEntity >> drawDebug: aRenderer using: aCamera [
+	"Dibujamos lo siguiente como rectángulos en este oreden:
+	 - Rectángulo que circunscribe el sprite
+	 - posición del elemento
+	 - Coliders si es que tiene"
+	
 	| rect |
-	aRenderer color: Color blue;
-		drawRectangle: aRectangle;
-		color: Color red;
-		drawPoint: position - aCamera viewport origin.
+	rect := rectDraw getRect translateBy: aCamera viewport getRect origin.
+	aRenderer color: Color yellow;
+		drawRectangle: rect.
+		
+	rect := Rectangle origin: position corner: (position + (5@5)).
+	rect := rect translateBy: aCamera viewport getRect origin.
+	"Transcript show: aCamera viewport getRect origin; cr."
+	aRenderer color: Color red;
+		drawRectangle: rect.
 		
 	collider ifNotNil: [
 		rect := collider boundary translateTo: position - aCamera viewport origin.
 		aRenderer color: Color yellow; drawRectangle: rect
-	]
+	].
+	aRenderer color: Color white.
 ]
 
 { #category : 'as yet unclassified' }
@@ -59,18 +73,19 @@ StaticEntity >> getCollider [
 StaticEntity >> initialize [
 
 	super initialize.
-	collider := UndefinedClass.
+	collider := nil.
 ]
 
 { #category : 'as yet unclassified' }
-StaticEntity >> rectCut: aEngineRectangle delta: aPoint [
-	"Las entidades estáticas, al no tener animaciones, no requieren
-	 de Frames para determinar las secciones de corte en el sprite.
-	 El parámetro aRectangle, define la sección del sprite y el
-	 área de dibujo"
+StaticEntity >> rectCut: aRectangle delta: aPoint [
+	"Define el área ed corte en el sprite y el delta respecto del
+	 centro de la entidad en la escena. Finalmente, translada
+	 el rectángulo de dibujo a la poaisicón que corresponde en
+	 la escena. "
 		
-	rectCut := aEngineRectangle.
-	rectDraw := RectDelta rect: aEngineRectangle delta: aPoint.
+	rectCut := aRectangle.
+	rectDraw := RectDelta rect: aRectangle delta: aPoint.
+	rectDraw translateTo: position.
 ]
 
 { #category : 'actions' }
