@@ -1,3 +1,6 @@
+"
+Soy una escena de un juego. 
+"
 Class {
 	#name : 'Scene',
 	#superclass : 'Object',
@@ -15,6 +18,7 @@ Class {
 { #category : 'adding' }
 Scene >> add: anEntity intoLayer: index [
 
+	anEntity setScene: self.
 	(layers at: index) add: anEntity.
 ]
 
@@ -31,6 +35,12 @@ Scene >> do [
 		arg1
 			doInPairs: [ :arg2 :arg3 | arg2 collisionTo: arg3 ];
 			do: [ :arg4 | arg4 do ] ]
+]
+
+{ #category : 'as yet unclassified' }
+Scene >> getCamera [
+
+	^camera.
 ]
 
 { #category : 'initialization' }

@@ -19,7 +19,7 @@ Class {
 }
 
 { #category : 'accessing' }
-Frame >> collider [
+Frame >> getCollider [
 
 	^ collider
 ]

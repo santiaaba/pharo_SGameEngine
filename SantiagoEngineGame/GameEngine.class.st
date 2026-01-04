@@ -33,6 +33,7 @@ GameEngine class >> debug: aBoolean [
 { #category : 'accessing' }
 GameEngine class >> deltaTime [
 
+	deltaTime ifNil: [	deltaTime := Time now asMilliSeconds].
 	^deltaTime
 ]
 
@@ -45,17 +46,13 @@ GameEngine class >> setDeltaTime: aMilliseconds [
 { #category : 'accessing' }
 GameEngine >> doing [
 	"Se realizan todas las acciones necesarias para
-	 un frma del juego"
+	 un frame del juego"
 	
-	"Capturamos eventos de los dispositivos de entrada"
-			
-	"Aplicamos la lógica del juego"
-	self gameLogic.
-	
-	"Movemos las entidades"
-	scene layers do:[ :layer | layer entities do:[ :entity | entity do] ].
-	
-	"Dibujamos el frame"
+	"Accionamos sobre las entidades dentro del mismo layer"
+	scene layers do:[ :layer | layer entities do:[ :entity | entity do: layer entities] ].
+
+	"Dibujamos el frame. Pueden generarse eventos como
+	 por ejemplo, que una animación llegue a su fin"
 	renderer color: Color white; clear.
 	scene redraw: renderer.
 	renderer present.
@@ -116,12 +113,11 @@ GameEngine >> start [
 	 que se indique con stop lo contrario"
 
 	| d |
+	Entity debug ifTrue: [ Transcript clear ].
 	[ stop ] whileFalse: [
 		d := Time now asMilliSeconds.
 		self doing.
-		self class setDeltaTime: Time now asMilliSeconds - d.
-		Transcript show: self class deltaTime; cr.
-		
+		self class setDeltaTime: Time now asMilliSeconds - d.		
 		" El límite de FPS lo fijamos en 120"
 		(self class deltaTime < 9) ifTrue: [
 			(Delay forMilliseconds: 9) wait.

@@ -24,8 +24,20 @@ AnimatedEntity >> addAnimation: anAnimation [
 
 { #category : 'accessing' }
 AnimatedEntity >> boundary [
-
+	"Retorna el espacio que ocupa en la escena el frame actual de la animación"
+	
 	^currentAnimation getFrame getRectDelta getRectTranslateTo: position
+]
+
+{ #category : 'undo - undo' }
+AnimatedEntity >> do: aGameEngine [
+	"Realiza acciones propias de una entidad animada"
+	
+	(super do: aGameEngine) ifTrue: [
+		| c |
+		c := currentAnimation getFrame getCollider.
+		c ifNotNil: [ c actualizePosition: position]
+	]
 ]
 
 { #category : 'as yet unclassified' }
@@ -37,9 +49,8 @@ AnimatedEntity >> draw: aRenderer using: aCamera [
 	rectCut := frame getRectDelta getRect.
 	rectDraw := (frame getRectTranslateTo: position) translateBy: aCamera viewport getRect origin.
 	aRenderer drawTexture: texture rectangle: rectCut in: rectDraw.
+
 	Entity debug ifTrue: [ self drawDebug: aRenderer using: aCamera ]
-	
-	
 ]
 
 { #category : 'as yet unclassified' }
@@ -49,15 +60,20 @@ AnimatedEntity >> drawDebug: aRenderer using: aCamera [
 	 - posición del elemento
 	 - Coliders si es que tiene"
 	
-	| rect |
-		
-	rect := Rectangle origin: position corner: (position + (5@5)).
-	rect := rect translateBy: aCamera viewport getRect origin.
-	"Transcript show: aCamera viewport getRect origin; cr."
-	aRenderer color: Color red;
-		drawRectangle: rect.
-		
+	| frame rectDraw |
+	super drawDebug: aRenderer using: aCamera.
+	frame := currentAnimation getFrame.
+	rectDraw := (frame getRectTranslateTo: position) translateBy: aCamera viewport getRect origin.
+	aRenderer color: Color yellow;
+		drawRectangle: rectDraw.
 	aRenderer color: Color white.
+]
+
+{ #category : 'as yet unclassified' }
+AnimatedEntity >> getMaxBoundary [
+	"Retorna el rectángulo que circunscribe a todos los frames"
+	
+	^currentAnimation getAnimationBoundary: position
 ]
 
 { #category : 'initialization' }

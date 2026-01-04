@@ -1,5 +1,5 @@
 Class {
-	#name : 'GameDemoAnimatedEntity',
+	#name : 'GameDemoAnimEntityColider',
 	#superclass : 'GameEnginePlatform',
 	#instVars : [
 		'player1'
@@ -9,20 +9,20 @@ Class {
 }
 
 { #category : 'accessing' }
-GameDemoAnimatedEntity class >> start [
+GameDemoAnimEntityColider class >> start [
 
 	^ self new start.
 ]
 
 { #category : 'as yet unclassified' }
-GameDemoAnimatedEntity >> gameLogic [
+GameDemoAnimEntityColider >> gameLogic [
 
 ]
 
 { #category : 'initialization' }
-GameDemoAnimatedEntity >> initialize [
+GameDemoAnimEntityColider >> initialize [
 
-	| layer animation ground |
+	| layer animation ground column|
 	super initialize.
 	animation := Animation new
 	addFrame: (Frame new setRectDelta: (RectDelta origin: 16@16 corner: 51@79 delta: -14@(-60)));
@@ -34,18 +34,27 @@ GameDemoAnimatedEntity >> initialize [
 	setSpeedFactor: 1.3.
 	player1 := AnimatedEntity new: '2dcharacterSprite.png' render: renderer.
 	player1 addAnimation: animation.
-	player1 setPosition: 100@400.
+	player1 setPosition: 100@390.
+	
+	column := StaticEntity new: 'columna.png' render: renderer.
+	column rectCut: (Rectangle origin: 0@0 corner: 86@186) delta: (-43)@(-186).
+	column setPosition: 300@400.
+	
 	ground := StaticEntity new: 'grounds.jpg' render: renderer.
 	ground rectCut: (Rectangle origin: 0@2152 corner: 5004@2751) delta: (0)@(0).
-	ground setPosition:(0,300).
+	ground setPosition:(0,280).
+	
 	layer := Layer new.
 	scene addLayer: layer;
-		add: ground intoLayer: 1;
-		add: player1 intoLayer:1.
+		add: ground intoLayer: 1.
+	layer := Layer new.
+	scene addLayer: layer;
+		add: player1 intoLayer:2;
+		add: column intoLayer:2.
 ]
 
 { #category : 'as yet unclassified' }
-GameDemoAnimatedEntity >> onKeyPressEvent: anEvent [
+GameDemoAnimEntityColider >> onKeyPressEvent: anEvent [
 
 	"Arriba"
 	(anEvent scanCode = 82 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(Float halfPi + Float pi))].

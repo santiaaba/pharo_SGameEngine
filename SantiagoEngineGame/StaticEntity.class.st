@@ -1,3 +1,6 @@
+"
+Soy una Entidad Estática en cuanto al sprite que me define. No tengo animación alguna
+"
 Class {
 	#name : 'StaticEntity',
 	#superclass : 'Entity',
@@ -15,13 +18,18 @@ Class {
 StaticEntity >> boundary [
 	
 	"Retorna el rectángulo que circunscribe el sprite"
-	^ rectDraw getRect.
+	^ rectDraw getRectTranslateTo: position.
 ]
 
 { #category : 'undo - undo' }
-StaticEntity >> do [
-	(super do) ifTrue: [
+StaticEntity >> do: aGameEngine [
+	"Realiza acciones propias de una StaticEntity"
+	
+	(super do: aGameEngine) ifTrue: [
 		rectDraw translateTo: position.
+		collider ifNotNil: [
+			collider actualizePosition: position.
+		]
 	]
 ]
 
@@ -45,20 +53,20 @@ StaticEntity >> drawDebug: aRenderer using: aCamera [
 	 - posición del elemento
 	 - Coliders si es que tiene"
 	
-	| rect |
-	rect := rectDraw getRect translateBy: aCamera viewport getRect origin.
+	| rect cameraRect|
+	super drawDebug: aRenderer using: aCamera.
+	
+	"Dibujamos el rectángulo que circunscribe el sprite"
+	cameraRect := aCamera viewport getRect origin.
+	rect := rectDraw getRect translateBy: cameraRect.
 	aRenderer color: Color yellow;
 		drawRectangle: rect.
-		
-	rect := Rectangle origin: position corner: (position + (5@5)).
-	rect := rect translateBy: aCamera viewport getRect origin.
-	"Transcript show: aCamera viewport getRect origin; cr."
-	aRenderer color: Color red;
-		drawRectangle: rect.
-		
+	
+	"Dibujamos los colliders"	
 	collider ifNotNil: [
-		rect := collider boundary translateTo: position - aCamera viewport origin.
-		aRenderer color: Color yellow; drawRectangle: rect
+		rect := collider boundary.
+		rect translateBy: cameraRect.
+		aRenderer color: Color blue; drawRectangle: rect
 	].
 	aRenderer color: Color white.
 ]
@@ -69,11 +77,16 @@ StaticEntity >> getCollider [
 	^ collider
 ]
 
+{ #category : 'as yet unclassified' }
+StaticEntity >> getMaxBoundary [
+
+	^self boundary.
+]
+
 { #category : 'initialization' }
 StaticEntity >> initialize [
 
 	super initialize.
-	collider := nil.
 ]
 
 { #category : 'as yet unclassified' }
@@ -93,4 +106,10 @@ StaticEntity >> save: aSteam [
 
 	aSteam nextPutAll: 0 asByteArray.
 	super save: aSteam
+]
+
+{ #category : 'initialization' }
+StaticEntity >> setCollider: aCollider [
+
+	collider := aCollider.
 ]

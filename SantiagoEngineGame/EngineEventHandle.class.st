@@ -1,3 +1,6 @@
+"
+Soy un manejador de eventos
+"
 Class {
 	#name : 'EngineEventHandle',
 	#superclass : 'OSWindowEventVisitor',

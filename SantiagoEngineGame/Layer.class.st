@@ -1,3 +1,6 @@
+"
+Represento una capa del juego en 2D. Tengo un conjunto de elementos que pueden interactuar entre ellos como ser colisionar.
+"
 Class {
 	#name : 'Layer',
 	#superclass : 'Object',
@@ -30,15 +33,12 @@ Layer >> initialize [
 
 { #category : 'as yet unclassified' }
 Layer >> redraw: aRenderer on: aCamera [
-	"Dibuja la parte de la esena visualizada por la cámara.
-	 De momento, recorre la colección de entidades, enviado
-	 a redibujar solo aquellas donde el recuadro que circunscribe
-	 su sprite setán total o parcialmente dentro de la cámara"
+	"Dibuja la parte de la esena visualizada por la cámara."
 
 	| i |
 	entities do:[ :entity | 
 		i := aCamera viewport getRect.
-		(i intersects: entity boundary) ifTrue: [
+		(i intersects: entity getMaxBoundary) ifTrue: [
 				entity draw: aRenderer using: aCamera
 			]]
 ]

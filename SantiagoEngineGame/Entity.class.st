@@ -4,6 +4,10 @@ Represento las características más generales de una entidad.
 ###Dirección
 Es un vector que indica la dirección y velocidad a la que se mueve la entidad. El vector
 puede verse afectado por otros vectores como por ejemplo la fuerza de gravedad.
+
+
+###Estado de colisión
+El atributo collisions es una colección de las colisiones que se están produciéndo contra otras entidades.
 "
 Class {
 	#name : 'Entity',
@@ -16,7 +20,10 @@ Class {
 		'input',
 		'tag',
 		'handlers',
-		'renderer'
+		'renderer',
+		'onCamera',
+		'scene',
+		'collisions'
 	],
 	#classInstVars : [
 		'debug'
@@ -58,20 +65,83 @@ Entity >> boundary [
 	self subclassResponsibility.
 ]
 
+{ #category : 'as yet unclassified' }
+Entity >> collisionTo: anotherEntity using: aVector [
+	"Verifica si se ha dado una colisión entre dos entidades
+	 que poseen collider. De producirse, se genera un evento
+	 y se recuerda que la entidad está colisionando con otra
+	 para no volver a evaluar la colisión en el siguiente loop
+	 y además para poder reconocer el evento cuando dejan de colisionar"
+	
+	|c1 c2 collision |
+	(collisions includes: anotherEntity) ifTrue: [ ^nil ].
+	c1 := self getCollider.
+	c2 := anotherEntity getCollider.
+	(c1 isNotNil and: c2 isNotNil) ifTrue:[
+		collision := c1 collisionTo: c2 using: aVector.
+		collision ifNotNil:[
+			collisions add: anotherEntity. 
+		]
+	].
+	^collision.
+]
+
 { #category : 'undo - undo' }
-Entity >> do [
+Entity >> do: anotherEntities [
 	"Representa un conjunto de acciones que la entidad ha
 	 de realizar en el fotograma actual el juego. Retorna true
 	 si ha cambiado su posición"
 	
-	| newPoint |
-	newPoint := gravity movePoint: position.
-	newPoint := direction movePoint: newPoint.
-	(position = newPoint) ifFalse: [
-		position := newPoint.
-		^true.
+	| vector changePosition newPoint collision|
+	
+	vector := direction + gravity.
+	
+	"Verificamos posible colisión. Si los collider son solidos,
+	 obtendremos un vector a utilizar para mover la entidad"
+	changePosition := false.
+	anotherEntities do: [ :e |
+		collision := self collisionTo: e using: vector.
+	] without: self.
+	collision ifNil: [ 
+		newPoint := vector movePoint: position.
+	] ifNotNil: [
+		newPoint := collision directionVector movePoint: position.
 	].
-	^false.
+	newPoint ifNotNil: [
+		changePosition := position ~= newPoint.
+		position := newPoint
+	].
+		
+	"Verificamos si sale o entra en cámara"
+	self isLeaveOrEnterCamera.
+		
+	"Verificamos si deja de chocar con otra entidad"
+	collisions do: [ :e | self notCollisionTo: e ].
+	
+	^changePosition.
+]
+
+{ #category : 'as yet unclassified' }
+Entity >> drawDebug: aRenderer using: aCamera [
+	"Dibujamos el punto posición de la entidad"
+	
+	| rect |
+	rect := Rectangle origin: position corner: (position + (5@5)).
+	rect := rect translateBy: aCamera viewport getRect origin.
+	aRenderer color: Color red;
+		drawRectangle: rect.
+]
+
+{ #category : 'accessing' }
+Entity >> getCollider [
+
+	^ self subclassResponsibility.
+]
+
+{ #category : 'as yet unclassified' }
+Entity >> getMaxBoundary [
+
+	^self subclassResponsibility.
 ]
 
 { #category : 'as yet unclassified' }
@@ -84,9 +154,37 @@ Entity >> getPosition [
 { #category : 'initialization' }
 Entity >> initialize [
 
-	position := 0 @ 0.
+	position := 0@0.
 	gravity := Vector module: 0 direction: 0.
-	direction := Vector module: 0 direction: 0
+	direction := Vector module: 0 direction: 0.
+	collisions := OrderedCollection new.
+]
+
+{ #category : 'testing' }
+Entity >> isLeaveOrEnterCamera [
+
+	| a |
+	
+	a := (scene getCamera viewport getRect) intersects: self getMaxBoundary.
+	onCamera ifNil: [
+		"Seteamos el estado inicial del elemento pero
+		 no generamos evento alguno."
+		onCamera := a.
+	] ifNotNil: [
+		onCamera ifTrue: [
+			a ifFalse:[
+				"Estaba en cámara y ha dejado de estarlo"
+				onCamera := a.
+				Transcript show: 'Salió de cámara'; cr.
+			]
+		] ifFalse: [
+			a ifTrue:[
+				"No estaba en camara y ahora ha comenzado a estarlo"
+				onCamera := a.
+				Transcript show: 'Entró en cámara'; cr.
+			]
+		]
+	]
 ]
 
 { #category : 'actions api' }
@@ -108,6 +206,23 @@ Entity >> move: aPoint [
 	 los valores de los ejes indicados en el parámetro aPoint"
 	
 	position := position translateBy: aPoint.
+]
+
+{ #category : 'as yet unclassified' }
+Entity >> notCollisionTo: anotherEntity [
+	"Verifica que no esté colisionado contra la entidad anotherEntity.
+	 De producirse, se genera un evento y se deja de recordar que
+	 la entidad está colisionando con la otra"
+	
+	|c1 c2|
+	c1 := self getCollider.
+	c2 := anotherEntity getCollider.
+	((c1 isNil or: c2 isNil) or:((c1 isCollisionTo: c2) isNil)) ifTrue:[
+		collisions remove: anotherEntity.
+		^ EntityLostCollisionEvent
+				newEvent: self 
+				collisionTo: anotherEntity.
+	].
 ]
 
 { #category : 'actions' }
@@ -140,6 +255,12 @@ Entity >> setPosition: aPoint [
 	"Posiciona el punto que representa su localización en en la escena"
 	
 	position := aPoint
+]
+
+{ #category : 'initialization' }
+Entity >> setScene: aScene [
+
+	scene := aScene.
 ]
 
 { #category : 'initialization' }
