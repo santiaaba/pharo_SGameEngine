@@ -76,26 +76,30 @@ Collider >> collisionTo: aCollider using: aVector [
 	 superpuestos. Caso contrario, el vector retornado en Collision será el mismo
 	 que el recibido por parámetro."
 	
-	| vector i j |
-	vector := nil.
+	| result collision |
 	(aVector collisionBetween: (self boundary) and: aCollider boundary) ifNotNil: [
-		"Posible colisión"
+		"Existe una posible colisión"
 		self actualizeSectors.
 		aCollider actualizeSectors.
-		i := 1.
-		[vector isNil and: (i <= sectors size)] whileTrue: [
-			j := 1.
-			[vector isNil and: (j <= aCollider sectors size)] whileTrue: [
-				vector := aVector collisionBetween: (sectors at:i) getRect
-				and: (aCollider sectors at:j).
-				j := j + 1
-			].
-			i := i + 1.
+		result := self sectors with: (aCollider sectors) FirstPairResult: [ :a :b |
+			aVector collisionBetween: a and: b
 		]
 	].
-	vector ifNil: [ ^nil ].
-	(solid not or: aCollider isSolid not) ifTrue: [ vector := aVector ].
-	^Collision new: self with: (sectors at: i-1) to: aCollider with: (aCollider sectors at: j-1) using: vector
+	result ifNil: [ ^nil ].
+	"Se ha producido una colisión. La reportamos"
+	collision := Collision new
+		originCollider: self;
+		targetCollider: aCollider;
+		originSector: (result right right);
+		targetSector: (result right left);
+		originalVector: aVector.
+	(solid not or: aCollider isSolid not) ifTrue: [ 
+			collision resultingVector: aVector.
+	] ifFalse: [
+		collision resultingVector: result left.
+	].
+	^collision
+
 ]
 
 { #category : 'initialization' }

@@ -81,7 +81,8 @@ Vector >> adaptToPoint: anotherPoint andSend: selector [
 { #category : 'as yet unclassified' }
 Vector >> calculateComponents [
 	"Privado. Calcula las componentes de un vector y las almacena
-	 entre sus atributos como distancias."
+	 entre sus atributos como distancias. Las componentes están
+	 expresadas sin signo."
 	
 	xComponent := module * (direction cos).
 	yComponent := module * (direction sin).
@@ -89,19 +90,11 @@ Vector >> calculateComponents [
 
 { #category : 'as yet unclassified' }
 Vector >> collisionBetween: aRectangle and: anotherRectangle [
-
 	"Determina si, moviendo aRectangle según self, colisionaría con
 	 anotherRectangle. De ocurrir, retorna un vector con su módulo
 	 recortado de tal forma que aRectangle colisione contra anotherRectangle
 	 pero no se puperpongan"
 	
-	| areaColision |
-	"Lo primero en hacer es verificar si ocurriría una posible colisión"
-	areaColision := Rectangle origin: (aRectangle origin)
-			corner: ((aRectangle corner x + xComponent)@(aRectangle corner y + yComponent)).
-	(areaColision intersects: anotherRectangle) ifFalse: [ ^nil ].
-	
-	"AnotherRectangle está en zona de posible colisión."
 	(direction between: 0 and: Float halfPi) ifTrue: [
 		^ self collisionBottomRightBetween: aRectangle and: anotherRectangle ].
 	(direction between: Float halfPi and: Float pi) ifTrue: [
@@ -117,8 +110,13 @@ Vector >> collisionBottomLeftBetween: aRectangle and: anotherRectangle [
 	"Privado. Ya sabiendo que hay una posible colisión entre aRectangle y
 	 anotherRectangle, obtiene el vector resultante o retorna nil"
 	
-	|diff vector p|
-	(anotherRectangle corner x < aRectangle origin x) ifTrue: [
+	|diff vector p collisionArea|
+	
+	collisionArea := Rectangle origin: ((aRectangle origin x + xComponent) @ (aRectangle origin y))
+			corner: ((aRectangle corner x)@(aRectangle corner y + yComponent)).
+	(collisionArea intersects: anotherRectangle) ifFalse: [ ^nil ].
+	
+	(anotherRectangle corner x <= aRectangle origin x) ifTrue: [
 		diff := aRectangle origin x - anotherRectangle corner x.
 		vector := Vector xMagnitude: diff direction: direction.
 		p := anotherRectangle origin y - vector y.
@@ -127,14 +125,14 @@ Vector >> collisionBottomLeftBetween: aRectangle and: anotherRectangle [
 			diff := anotherRectangle origin y - aRectangle corner y.
 			^ Vector yMagnitude: diff direction: direction.
 		].
-		(p + anotherRectangle height > aRectangle origin y) ifTrue: [ ^nil ].  "<= SIN COLISION"
+		(p + anotherRectangle height < aRectangle origin y) ifTrue: [ ^nil ].  "<= SIN COLISION"
 		^ vector.
 	] ifFalse: [
 		"Posible colisión por debajo"
 		diff := anotherRectangle origin y - aRectangle corner y.
 		vector := Vector yMagnitude: diff direction: direction.
-		p := anotherRectangle corner x + vector x.
-		(p > aRectangle origin x) ifTrue: [
+		p := anotherRectangle origin x + vector x.
+		(p > aRectangle corner x) ifTrue: [
 			^nil
 		].
 		^vector
@@ -147,8 +145,13 @@ Vector >> collisionBottomRightBetween: aRectangle and: anotherRectangle [
 	"Privado. Ya sabiendo que hay una posible colisión entre aRectangle y
 	 anotherRectangle, obtiene el vector resultante o retorna nil"
 	
-	|diff vector p|
-	(anotherRectangle origin x > aRectangle corner x) ifTrue: [
+	|diff vector p collisionArea|
+	
+	collisionArea := Rectangle origin: (aRectangle origin)
+			corner: ((aRectangle corner x + xComponent)@(aRectangle corner y + yComponent)).
+	(collisionArea intersects: anotherRectangle) ifFalse: [ ^nil ].
+	
+	(anotherRectangle origin x >= aRectangle corner x) ifTrue: [
 		"COLISION por derecha"
 		diff := anotherRectangle origin x - aRectangle corner x.
 		vector := Vector xMagnitude: diff direction: direction.
@@ -158,7 +161,7 @@ Vector >> collisionBottomRightBetween: aRectangle and: anotherRectangle [
 			diff := anotherRectangle origin y - aRectangle corner y.
 			^ Vector yMagnitude: diff direction: direction.
 		].
-		(p + anotherRectangle height > aRectangle origin y) ifTrue: [ ^nil ].  "<= SIN COLISION"
+		(p + anotherRectangle height < aRectangle origin y) ifTrue: [ ^nil ].  "<= SIN COLISION"
 		^ vector.
 	] ifFalse: [
 		"Posible colisión por debajo"
@@ -178,18 +181,23 @@ Vector >> collisionTopLeftBetween: aRectangle and: anotherRectangle [
 	"Privado. Ya sabiendo que hay una posible colisión entre aRectangle y
 	 anotherRectangle, obtiene el vector resultante o retorna nil"
 	
-	|diff vector p|
-	(anotherRectangle corner x < aRectangle origin x) ifTrue: [
+	|diff vector p collisionArea|
+	
+	collisionArea := Rectangle origin: ((aRectangle origin x + xComponent) @ (aRectangle origin y + yComponent))
+			corner: aRectangle corner.
+	(collisionArea intersects: anotherRectangle) ifFalse: [ ^nil ].
+	
+	(anotherRectangle corner x <= aRectangle origin x) ifTrue: [
 		"COLISION por izquierda"
 		diff := aRectangle origin x - anotherRectangle corner x.
 		vector := Vector xMagnitude: diff direction: direction.
 		p := anotherRectangle corner y + vector y.
-		(p > aRectangle origin y) ifTrue: [
+		(p < aRectangle origin y) ifTrue: [
 			"COLISION por ARRIBA a la izquierda"
 			diff := aRectangle origin y - anotherRectangle corner y.
 			^ Vector yMagnitude: diff direction: direction.
 		].
-		(p + anotherRectangle height > aRectangle corner y) ifTrue: [ ^nil ].  "<= SIN COLISION"
+		(p - anotherRectangle height > aRectangle corner y) ifTrue: [ ^nil ].  "<= SIN COLISION"
 		^ vector.
 	] ifFalse: [
 		"Posible colisión por arriba"
@@ -209,18 +217,23 @@ Vector >> collisionTopRightBetween: aRectangle and: anotherRectangle [
 	"Privado. Ya sabiendo que hay una posible colisión entre aRectangle y
 	 anotherRectangle, obtiene el vector resultante o retorna nil"
 	
-	|diff vector p|
-	(anotherRectangle origin x > aRectangle corner x) ifTrue: [
+	|diff vector p collisionArea|
+	
+	collisionArea := Rectangle origin: ((aRectangle origin x) @ (aRectangle origin y + yComponent))
+			corner: ((aRectangle corner x + xComponent)@(aRectangle corner y)).
+	(collisionArea intersects: anotherRectangle) ifFalse: [ ^nil ].
+	
+	(anotherRectangle origin x >= aRectangle corner x) ifTrue: [
 		"COLISION por derecha"
 		diff := anotherRectangle origin x - aRectangle corner x.
 		vector := Vector xMagnitude: diff direction: direction.
 		p := anotherRectangle corner y + vector y.
-		(p > aRectangle origin y) ifTrue: [
+		(p < aRectangle origin y) ifTrue: [
 			"COLISION por ARRIBA a la derecha"
 			diff := aRectangle origin y - aRectangle corner y.
 			^ Vector yMagnitude: diff direction: direction.
 		].
-		(p + anotherRectangle height > aRectangle corner y) ifTrue: [ ^nil ].  "<= SIN COLISION"
+		(p - anotherRectangle height > aRectangle corner y) ifTrue: [ ^nil ].  "<= SIN COLISION"
 		^ vector.
 	] ifFalse: [
 		"Posible colisión por arriba"

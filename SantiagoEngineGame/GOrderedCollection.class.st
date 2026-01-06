@@ -9,6 +9,55 @@ Class {
 }
 
 { #category : 'as yet unclassified' }
+GOrderedCollection >> with: anotherCollection FirstPairResult: aBlock [
+	"Evaluo todos los elementos de la primer colección
+	 con todos los elementos de la segunda colección,
+	 en el orden en que aparecen. Cuando encuentro un
+	 par de elementos que verifican aBlock, devuelvo el
+	 Objeto que resulte de evaluar ese bloque."
+	
+	 | result i j |
+	 i := 1.
+	 result := nil.
+	 [ result isNil and:( i <= self size) ] whileTrue: [
+		j := 1.
+		[ result isNil and:( j <= anotherCollection size) ] whileTrue: [
+			result := aBlock value: (self at:i) value:(anotherCollection at:j).
+			result ifNotNil: [
+				result := FLPair new left: result;
+					right: (FLPair new left: (self at:i);
+						right:(anotherCollection at:j)).
+			].
+			j := j + 1.
+		].
+		i := i + 1.
+	 ].
+	^result
+]
+
+{ #category : 'as yet unclassified' }
+GOrderedCollection >> with: anotherCollection collectFirst: aBlock [
+	"Evaluo todos los elementos de la primer colección
+	 con todos los elementos de la segunda colección,
+	 en el orden en que aparecen. Cuando encuentro un
+	 par de elementos que verifican aBlock, devuelvo el
+	 Objeto que resulte de evaluar ese bloque."
+	
+	 | result i j |
+	 i := 1.
+	 result := nil.
+	 [ result isNil and:( i <= self size) ] whileTrue: [
+		j := 1.
+		[ result isNil and:( j <= anotherCollection size) ] whileTrue: [
+			result := aBlock value: (self at:i) value:(anotherCollection at:j).
+			j := j + 1.
+		].
+		i := i + 1.
+	 ].
+	^result
+]
+
+{ #category : 'as yet unclassified' }
 GOrderedCollection >> with: anotherCollection findFirstPair: aBlock [
 	"Evaluo todos los elementos de la primer colección
 	 con todos los elementos de la segunda colección,

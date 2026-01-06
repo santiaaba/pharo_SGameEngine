@@ -12,7 +12,8 @@ Class {
 	#name : 'Collision',
 	#superclass : 'Object',
 	#instVars : [
-		'directionVector',
+		'originalVector',
+		'resultingVector',
 		'originCollider',
 		'originSector',
 		'targetCollider',
@@ -22,26 +23,16 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
-{ #category : 'instance creation' }
-Collision class >> new: anOriginCollider with: anOriginSector to: aTargetCollider with: aTargetSector using: aVector [
-
-	^ self new setOriginCollider: anOriginCollider;
-	  setTargetCollider: aTargetCollider;
-	  setOriginSector: anOriginSector;
-	  setTargetSector: aTargetSector;
-	  setDirectionVector: aVector.
-]
-
-{ #category : 'accessing' }
-Collision >> directionVector [
-
-	^ directionVector
-]
-
 { #category : 'accessing' }
 Collision >> originCollider [
 
 	^ originCollider
+]
+
+{ #category : 'initialization' }
+Collision >> originCollider: aCollider [
+
+	originCollider := aCollider.
 ]
 
 { #category : 'accessing' }
@@ -51,33 +42,33 @@ Collision >> originSector [
 ]
 
 { #category : 'initialization' }
-Collision >> setDirectionVector: aVector [
-
-	directionVector := aVector.
-]
-
-{ #category : 'initialization' }
-Collision >> setOriginCollider: aCollider [
-
-	originCollider := aCollider.
-]
-
-{ #category : 'initialization' }
-Collision >> setOriginSector: aSector [
+Collision >> originSector: aSector [
 
 	originSector := aSector.
 ]
 
-{ #category : 'initialization' }
-Collision >> setTargetCollider: aCollider [
+{ #category : 'accessing' }
+Collision >> originalVector [
 
-	targetCollider := aCollider.
+	^ originalVector
 ]
 
-{ #category : 'initialization' }
-Collision >> setTargetSector: aSector [
+{ #category : 'accessing' }
+Collision >> originalVector: anObject [
 
-	targetSector := aSector.
+	originalVector := anObject
+]
+
+{ #category : 'accessing' }
+Collision >> resultingVector [
+
+	^ resultingVector
+]
+
+{ #category : 'accessing' }
+Collision >> resultingVector: anObject [
+
+	resultingVector := anObject
 ]
 
 { #category : 'accessing' }
@@ -86,8 +77,20 @@ Collision >> targetCollider [
 	^ targetCollider
 ]
 
+{ #category : 'initialization' }
+Collision >> targetCollider: aCollider [
+
+	targetCollider := aCollider.
+]
+
 { #category : 'accessing' }
 Collision >> targetSector [
 
 	^ targetSector
+]
+
+{ #category : 'initialization' }
+Collision >> targetSector: aSector [
+
+	targetSector := aSector.
 ]

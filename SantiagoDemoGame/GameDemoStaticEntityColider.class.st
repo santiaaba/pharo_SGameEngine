@@ -26,12 +26,13 @@ GameDemoStaticEntityColider >> initialize [
 	super initialize.
 	player1 := StaticEntity new: '2dcharacterSprite.png' render: renderer.
 	player1 rectCut: (Rectangle origin: 16@16 corner: 51@79) delta: -14@(-60).
-	player1 setPosition: 100@390.
+	player1 setPosition: 360@270.
+	player1 setName: 'player1'.
 	collider := Collider newPosition: player1 getPosition.
 	collider addSectorOrigin: 19@19 corner: 48@76 delta: (-14)@(-60).
 	collider setSolid: true.
 	player1 setCollider: collider.
-	"player1 setDirection: (Vector module: 10 direction: 0)."
+	"player1 setDirection: (Vector module: 10 direction: (Float pi + (Float halfPi /2)))."
 	
 	column := StaticEntity new: 'columna.png' render: renderer.
 	column rectCut: (Rectangle origin: 0@0 corner: 86@186) delta: (-43)@(-186).
@@ -39,7 +40,8 @@ GameDemoStaticEntityColider >> initialize [
 	collider := Collider newPosition: column getPosition.
 	collider addSectorOrigin: 0@0 corner: 83@183 delta: (-43)@(-186).
 	collider setSolid: true.
-	column setCollider: collider. 
+	column setCollider: collider.
+	column setName:'Columna'. 
 	
 	ground := StaticEntity new: 'grounds.jpg' render: renderer.
 	ground rectCut: (Rectangle origin: 0@2152 corner: 5004@2751) delta: (0)@(0).

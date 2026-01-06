@@ -13,6 +13,7 @@ Class {
 	#name : 'Entity',
 	#superclass : 'Object',
 	#instVars : [
+		'name',
 		'position',
 		'texture',
 		'gravity',
@@ -96,16 +97,16 @@ Entity >> do: anotherEntities [
 	
 	vector := direction + gravity.
 	
-	"Verificamos posible colisión. Si los collider son solidos,
-	 obtendremos un vector a utilizar para mover la entidad"
 	changePosition := false.
-	anotherEntities do: [ :e |
-		collision := self collisionTo: e using: vector.
-	] without: self.
+	(vector module ~= 0) ifTrue: [
+		anotherEntities do: [ :e |
+			collision := self collisionTo: e using: vector.
+		] without: self.
+	].
 	collision ifNil: [ 
 		newPoint := vector movePoint: position.
 	] ifNotNil: [
-		newPoint := collision directionVector movePoint: position.
+		newPoint := collision resultingVector movePoint: position.
 	].
 	newPoint ifNotNil: [
 		changePosition := position ~= newPoint.
@@ -154,6 +155,7 @@ Entity >> getPosition [
 { #category : 'initialization' }
 Entity >> initialize [
 
+	name := 'Entidad'.
 	position := 0@0.
 	gravity := Vector module: 0 direction: 0.
 	direction := Vector module: 0 direction: 0.
@@ -248,6 +250,12 @@ Entity >> setGravity: aVector [
 	"Asigna un vector gravedad"
 	
 	gravity := aVector
+]
+
+{ #category : 'initialization' }
+Entity >> setName: aString [
+
+	name := aString.
 ]
 
 { #category : 'initialization' }
