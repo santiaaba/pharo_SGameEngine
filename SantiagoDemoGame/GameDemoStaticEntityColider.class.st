@@ -21,13 +21,15 @@ GameDemoStaticEntityColider >> gameLogic [
 
 { #category : 'initialization' }
 GameDemoStaticEntityColider >> initialize [
-
+	" Un ejemplo "
+	
 	| layer ground column collider|
 	super initialize.
 	player1 := StaticEntity new: '2dcharacterSprite.png' render: renderer.
 	player1 rectCut: (Rectangle origin: 16@16 corner: 51@79) delta: -14@(-60).
-	player1 setPosition: 360@270.
+	player1 setPosition: 300@50.
 	player1 setName: 'player1'.
+	player1 setGravity: (Vector module: 0.1 direction: Float halfPi).
 	collider := Collider newPosition: player1 getPosition.
 	collider addSectorOrigin: 19@19 corner: 48@76 delta: (-14)@(-60).
 	collider setSolid: true.
@@ -60,14 +62,14 @@ GameDemoStaticEntityColider >> initialize [
 GameDemoStaticEntityColider >> onKeyPressEvent: anEvent [
 
 	"Arriba"
-	(anEvent scanCode = 82 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(Float halfPi + Float pi))].
+	(anEvent scanCode = 82 ) ifTrue: [ player1 addDirection: (Vector module:5  direction:(Float halfPi + Float pi))].
 	
 	"Abajo"
-	(anEvent scanCode = 81 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(Float halfPi))].
+	(anEvent scanCode = 81 ) ifTrue: [ player1 addDirection: (Vector module:2  direction:(Float halfPi))].
 	
 	"Derecha"
-	(anEvent scanCode = 79 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(0))].
+	(anEvent scanCode = 79 ) ifTrue: [ player1 addDirection: (Vector module:2  direction:(0))].
 	
 	"Izquierda"
-	(anEvent scanCode = 80 ) ifTrue: [ player1 addDirection: (Vector module:1  direction:(Float pi))].
+	(anEvent scanCode = 80 ) ifTrue: [ player1 addDirection: (Vector module:2  direction:(Float pi))].
 ]

@@ -18,6 +18,7 @@ Class {
 		'texture',
 		'gravity',
 		'direction',
+		'aceleration',
 		'input',
 		'tag',
 		'handlers',
@@ -49,6 +50,12 @@ Entity class >> debug: aBoolean [
 Entity class >> new: aTexture render: aRenderer [
 
 	^ self new setTexture: aTexture with: aRenderer
+]
+
+{ #category : 'initialization' }
+Entity >> aceleration [
+
+	^aceleration.
 ]
 
 { #category : 'initialization' }
@@ -93,25 +100,20 @@ Entity >> do: anotherEntities [
 	 de realizar en el fotograma actual el juego. Retorna true
 	 si ha cambiado su posición"
 	
-	| vector changePosition newPoint collision|
+	| changePosition newPoint collision |
 	
-	vector := direction + gravity.
-	
-	changePosition := false.
-	(vector module ~= 0) ifTrue: [
+	direction := direction + (gravity * (GameEngine deltaTime)).
+	(direction module ~= 0) ifTrue: [
 		anotherEntities do: [ :e |
-			collision := self collisionTo: e using: vector.
+			collision := self collisionTo: e using: (direction * (GameEngine deltaTime)).
+			"Actualizamos el vector dirección con el potencial nuevo vector"
+			collision ifNotNil: [ direction := collision resultingVector	].
 		] without: self.
 	].
-	collision ifNil: [ 
-		newPoint := vector movePoint: position.
-	] ifNotNil: [
-		newPoint := collision resultingVector movePoint: position.
-	].
-	newPoint ifNotNil: [
-		changePosition := position ~= newPoint.
-		position := newPoint
-	].
+	 
+	newPoint := (direction * (GameEngine deltaTime)) movePoint: position.
+	changePosition := position ~= newPoint.
+	position := newPoint.
 		
 	"Verificamos si sale o entra en cámara"
 	self isLeaveOrEnterCamera.
@@ -159,6 +161,7 @@ Entity >> initialize [
 	position := 0@0.
 	gravity := Vector module: 0 direction: 0.
 	direction := Vector module: 0 direction: 0.
+	aceleration := Vector module: 0 direction: 0.
 	collisions := OrderedCollection new.
 ]
 
@@ -166,7 +169,6 @@ Entity >> initialize [
 Entity >> isLeaveOrEnterCamera [
 
 	| a |
-	
 	a := (scene getCamera viewport getRect) intersects: self getMaxBoundary.
 	onCamera ifNil: [
 		"Seteamos el estado inicial del elemento pero
@@ -177,13 +179,11 @@ Entity >> isLeaveOrEnterCamera [
 			a ifFalse:[
 				"Estaba en cámara y ha dejado de estarlo"
 				onCamera := a.
-				Transcript show: 'Salió de cámara'; cr.
 			]
 		] ifFalse: [
 			a ifTrue:[
 				"No estaba en camara y ahora ha comenzado a estarlo"
 				onCamera := a.
-				Transcript show: 'Entró en cámara'; cr.
 			]
 		]
 	]
@@ -236,6 +236,12 @@ Entity >> save: aStream [
 		nextPutAll: position y asFloat asIEEE32BitWord asByteArray.
 	gravity save: aStream.
 	direction save: aStream
+]
+
+{ #category : 'initialization' }
+Entity >> setAceleration: aVector [
+
+	aceleration := aVector.
 ]
 
 { #category : 'initialization' }

@@ -33,7 +33,7 @@ GameEngine class >> debug: aBoolean [
 { #category : 'accessing' }
 GameEngine class >> deltaTime [
 
-	deltaTime ifNil: [	deltaTime := Time now asMilliSeconds].
+	deltaTime ifNil: [	deltaTime := 0.009].
 	^deltaTime
 ]
 
@@ -112,16 +112,18 @@ GameEngine >> start [
 	"Comienza y mantiene el loop del juego hasta
 	 que se indique con stop lo contrario"
 
-	| d |
+	| t1 t2 |
 	Entity debug ifTrue: [ Transcript clear ].
 	[ stop ] whileFalse: [
-		d := Time now asMilliSeconds.
+		t1 := SDL2 ticks.
 		self doing.
-		self class setDeltaTime: Time now asMilliSeconds - d.		
+		t2 := SDL2 ticks.
+		GameEngine setDeltaTime: (t2 - t1)/1000.	
 		" El límite de FPS lo fijamos en 120"
-		(self class deltaTime < 9) ifTrue: [
-			(Delay forMilliseconds: 9) wait.
-		]
+		(GameEngine deltaTime < 0.009) ifTrue: [
+			GameEngine setDeltaTime: 0.009.
+			(Delay forMilliseconds: 0.009) wait.
+		].
 	]
 ]
 

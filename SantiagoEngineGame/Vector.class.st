@@ -39,6 +39,14 @@ Vector class >> yMagnitude: magnitude direction: aRadians [
 ]
 
 { #category : 'arithmetic' }
+Vector >> * aNumber [
+	"Retorna un nuevo Vector resultado de una
+	 multiplicación escalar"
+	
+	^ self class xMagnitude: (xComponent * aNumber) direction: self direction.
+]
+
+{ #category : 'arithmetic' }
 Vector >> + anotherVector [
 	"Retorna un nuevo vector resultado de la suma de los dos vectores.
 	 Si Alguno de los vectores tiene modulo 0, entonces se retorna el
