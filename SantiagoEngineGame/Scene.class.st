@@ -85,13 +85,14 @@ Scene >> redraw: aRenderer [
 ]
 
 { #category : 'as yet unclassified' }
-Scene >> saveOn: arg1 [
+Scene >> saveOn: fileName [
+	"Salva una escena como un archivo de datos binarios."
 
-	| tmp1 |
-	tmp1 := arg1 asFileReference binaryWriteStream.
-	tmp1 position: 1.
-	(layers at: 1) do: [ :arg2 | arg2 save: tmp1 ].
-	tmp1 close
+	| aStream |
+	aStream := fileName asFileReference binaryWriteStream.
+	aStream position: 1.
+	(layers at: 1) save: aStream.
+	aStream close
 ]
 
 { #category : 'initialization' }

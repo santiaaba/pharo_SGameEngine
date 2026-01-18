@@ -92,11 +92,13 @@ Collider >> collisionTo: aCollider using: aVector [
 		targetCollider: aCollider;
 		originSector: (result right right);
 		targetSector: (result right left);
-		originalVector: aVector.
+		originalVector: aVector;
+		originSectorFace: result left sideOrigin;
+		targetSectorFace: result left sideTarget.
 	(solid not or: aCollider isSolid not) ifTrue: [ 
 			collision resultingVector: aVector.
 	] ifFalse: [
-		collision resultingVector: result left.
+		collision resultingVector: result left resultingVector.
 	].
 	^collision
 
@@ -117,13 +119,16 @@ Collider >> initialize [
 Collider >> isCollisionTo: aCollider [
 	"Verifica si dos entidades se encuentran en colisión
 	 devolviendo, como par ordenado, las secciones que lo
-	 están. Retorna nil si no hay colisión."
+	 están. Retorna nil si no hay colisión. Incrementamos
+	 en una unidad los rectángulos de la primer entidad porque
+	 cuando se tocan pero no se superponen, deseamos que se indique
+	 que están colisionando"
 	
 	| pair |
-	(self boundary intersects: aCollider boundary) ifTrue: [
+	((self boundary extendBy: 1) intersects: aCollider boundary) ifTrue: [
 		self actualizeSectors.
 		aCollider actualizeSectors. 
-		pair := self sectors with: (aCollider sectors) findFirstPair: [ :a :b | a intersects: b ]
+		pair := self sectors with: (aCollider sectors) findFirstPair: [ :a :b | (a extendBy: 1) intersects: b ]
 	].
 	^pair.
 ]

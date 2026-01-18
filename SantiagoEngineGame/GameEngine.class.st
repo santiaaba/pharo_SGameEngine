@@ -23,6 +23,12 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'accessing' }
+GameEngine class >> debug [
+
+	^debug.
+]
+
 { #category : 'start' }
 GameEngine class >> debug: aBoolean [
 

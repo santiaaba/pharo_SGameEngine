@@ -8,7 +8,7 @@ Nos valemos del deltaTime de la Clase GameEngine el cual es el tiempo en miliseg
 La clase Animation debe entregar los frame mediante el método getFrame de tal forma que se pase al siguiente frame cuando .... completar
 
 ##Boundary
-Es el rectángulo que circunscribe a lo que ocupan todos los frames de la animación.
+Es el rectángulo que circunscribe a lo que ocupan todos los frames de la animación. SE utiliza para detectar una posible colisión o para determinar cuando entra o sale de cámara una entidad.
 "
 Class {
 	#name : 'Animation',
@@ -30,7 +30,8 @@ Class {
 
 { #category : 'adding' }
 Animation >> addFrame: aFrame [
-	"Agrega un frame a la animación."
+	"Agrega un frame a la animación. Recalculamos el boundary
+	 que circunscribe a todos los frames."
 	
 	frames add: aFrame.
 	index := 1.
@@ -57,6 +58,13 @@ Animation >> getAnimationBoundary: aPoint [
 
 { #category : 'private - display' }
 Animation >> getFrame [
+	"Retorna el frame actual sin avanzar al siguiente"
+	
+	^currentFrame
+]
+
+{ #category : 'private - display' }
+Animation >> getFrameAndNext [
 	"Retorna el frame actual y al hacerlo, avanza al siguiente frame.
 	 Si loop es falso, allí se detiene. Si loop es verdadero, al llegar
 	 al último frame, regresa al primero."
@@ -99,25 +107,17 @@ Animation >> load: arg1 [
 ]
 
 { #category : 'as yet unclassified' }
-Animation >> nextFrame [
-
-	index = frames size
-		ifTrue: [ loop ifTrue: [ index := 1 ] ]
-		ifFalse: [ index := index + 1 ]
-]
-
-{ #category : 'as yet unclassified' }
 Animation >> recalculateBoundary [
-	"En base a los frames de la animación, recalcula el
-	 boundary a todos ellos suponiendo una posiión 0@0."
+	"Método privado. En base a los frames de la animación,
+	 recalcula el boundary a todos ellos."
 	
-	| b |
+	| b r |
 	b := nil.
 	frames do: [ :frame |
-		frame translateTo: 0@0.
-		b ifNil: [ b := frame ] ifNotNil:[ b := b merge: frame].
+		r := frame getRectDelta.
+		b ifNil: [ b := r ] ifNotNil:[ b := b merge: r].
 	].
-	boundary := b.
+	boundary := r.
 ]
 
 { #category : 'initialization' }

@@ -9,6 +9,20 @@ Class {
 }
 
 { #category : 'as yet unclassified' }
+GOrderedCollection >> reject: rejectBlock do: doBlock [
+	"Remueve los elementos que verifican el bloque rejectBlock
+	 y por cada uno de los removidos, les aplica el bloque doBlock"
+
+	| aux |
+	aux := self class new.
+	self do: [ :each |
+		(rejectBlock value: each)
+			ifTrue:[ doBlock value: each ]
+			ifFalse: [ aux add: each] ].
+	^aux.
+]
+
+{ #category : 'as yet unclassified' }
 GOrderedCollection >> with: anotherCollection FirstPairResult: aBlock [
 	"Evaluo todos los elementos de la primer colección
 	 con todos los elementos de la segunda colección,

@@ -25,11 +25,12 @@ StaticEntity >> boundary [
 StaticEntity >> do: aGameEngine [
 	"Realiza acciones propias de una StaticEntity"
 	
-	(super do: aGameEngine) ifTrue: [
-		rectDraw translateTo: position.
-		collider ifNotNil: [
-			collider actualizePosition: position.
-		]
+	(super do: aGameEngine) ifFalse: [ ].	
+	"Solo actualizamos los rectángulos de redraw y colliders
+	 si nos hemos desplezado. Es para minimizar cálculos"
+	rectDraw translateTo: position.
+	collider ifNotNil: [
+		collider actualizePosition: position.
 	]
 ]
 

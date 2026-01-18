@@ -12,16 +12,33 @@ Class {
 	#name : 'Collision',
 	#superclass : 'Object',
 	#instVars : [
+		'originEntity',
+		'targetEntity',
 		'originalVector',
 		'resultingVector',
 		'originCollider',
 		'originSector',
 		'targetCollider',
-		'targetSector'
+		'targetSector',
+		'originSectorFace',
+		'targetSectorFace'
 	],
 	#category : 'SantiagoEngineGame',
 	#package : 'SantiagoEngineGame'
 }
+
+{ #category : 'as yet unclassified' }
+Collision >> fixVector: aVector [
+	"Dado el vector pasado por parámetro, retorna un nuevo
+	 vector donde la dirección en la que estamos colisionando
+	 se anula."
+	
+	(originSectorFace = #top and: aVector y < 0) ifTrue: [ ^ Vector xValue: aVector x ].
+	(originSectorFace = #bottom and: aVector y > 0) ifTrue: [ ^ Vector xValue: aVector x ].
+	(originSectorFace = #left and: aVector x > 0) ifTrue: [ ^ Vector yValue: aVector y ].
+	(originSectorFace = #right and: aVector x < 0) ifTrue: [ ^ Vector yValue: aVector y ].
+	^ aVector.
+]
 
 { #category : 'accessing' }
 Collision >> originCollider [
@@ -36,6 +53,18 @@ Collision >> originCollider: aCollider [
 ]
 
 { #category : 'accessing' }
+Collision >> originEntity [
+
+	^ originEntity
+]
+
+{ #category : 'accessing' }
+Collision >> originEntity: anObject [
+
+	originEntity := anObject
+]
+
+{ #category : 'accessing' }
 Collision >> originSector [
 
 	^ originSector
@@ -45,6 +74,18 @@ Collision >> originSector [
 Collision >> originSector: aSector [
 
 	originSector := aSector.
+]
+
+{ #category : 'accessing' }
+Collision >> originSectorFace [
+
+	^ originSectorFace
+]
+
+{ #category : 'accessing' }
+Collision >> originSectorFace: anObject [
+
+	originSectorFace := anObject
 ]
 
 { #category : 'accessing' }
@@ -84,6 +125,18 @@ Collision >> targetCollider: aCollider [
 ]
 
 { #category : 'accessing' }
+Collision >> targetEntity [
+
+	^ targetEntity
+]
+
+{ #category : 'accessing' }
+Collision >> targetEntity: anObject [
+
+	targetEntity := anObject
+]
+
+{ #category : 'accessing' }
 Collision >> targetSector [
 
 	^ targetSector
@@ -93,4 +146,16 @@ Collision >> targetSector [
 Collision >> targetSector: aSector [
 
 	targetSector := aSector.
+]
+
+{ #category : 'accessing' }
+Collision >> targetSectorFace [
+
+	^ targetSectorFace
+]
+
+{ #category : 'accessing' }
+Collision >> targetSectorFace: anObject [
+
+	targetSectorFace := anObject
 ]

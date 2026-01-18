@@ -42,3 +42,11 @@ Layer >> redraw: aRenderer on: aCamera [
 				entity draw: aRenderer using: aCamera
 			]]
 ]
+
+{ #category : 'actions' }
+Layer >> save: aStream [
+	"Salva los datos de un layer en el archivo"
+	
+	(GameEngine debug) ifTrue: [ Transcript show:'Salvando';cr. ].
+	entities do: [ :entity | entity save: aStream ]
+]
