@@ -12,6 +12,17 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'private' }
+Layer class >> loadFrom: aStream [
+	"Lee del archivo el contenido del layer"
+	
+	| layer amountEntities |
+	layer := self new.
+	amountEntities := GameEngine readByteOn: aStream.
+	1 to: amountEntities do: [ layer add: (Entity loadFrom: aStream) ].
+	^ layer.
+]
+
 { #category : 'adding' }
 Layer >> add: anEntity [
 
@@ -47,6 +58,7 @@ Layer >> redraw: aRenderer on: aCamera [
 Layer >> save: aStream [
 	"Salva los datos de un layer en el archivo"
 	
-	(GameEngine debug) ifTrue: [ Transcript show:'Salvando';cr. ].
+	(GameEngine debug) ifTrue: [ Transcript show:'Salvando layer';cr ].
+	GameEngine on: aStream nextPutByte: entities size.
 	entities do: [ :entity | entity save: aStream ]
 ]

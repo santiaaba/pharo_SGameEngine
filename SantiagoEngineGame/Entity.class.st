@@ -15,6 +15,7 @@ Class {
 	#instVars : [
 		'name',
 		'position',
+		'textureFileName',
 		'texture',
 		'gravity',
 		'direction',
@@ -46,10 +47,26 @@ Entity class >> debug: aBoolean [
 	debug := aBoolean
 ]
 
+{ #category : 'private' }
+Entity class >> loadFrom: aStream [
+
+	| typeOfEntity entity |
+	typeOfEntity := GameEngine readByteOn: aStream.
+	(typeOfEntity = 0) ifTrue: [
+		entity := StaticEntity loadFrom: aStream.
+	].
+	(typeOfEntity = 1) ifTrue: [
+		entity := AnimatedEntity loadFrom: aStream.
+	].
+	^entity.
+]
+
 { #category : 'instance creation' }
 Entity class >> new: aTexture render: aRenderer [
-
-	^ self new setTexture: aTexture with: aRenderer
+	"Crea una entidad utilizando un archivo de texturas y un renderer"
+	
+	(aTexture size > 255) ifTrue: [ self error:'Ruta del archivo de texturas debe tener menos de 256 caracteres' ].
+	^ self new setTexture: aTexture with: aRenderer; textureFileName: aTexture.
 ]
 
 { #category : 'initialization' }
@@ -68,8 +85,8 @@ Entity >> addDirection: aVector [
 
 { #category : 'accessing' }
 Entity >> boundary [
-
 	" Retorna el SDL_Rect que circunscribe al sprite "
+	
 	self subclassResponsibility.
 ]
 
@@ -156,13 +173,13 @@ Entity >> drawDebug: aRenderer using: aCamera [
 { #category : 'accessing' }
 Entity >> getCollider [
 
-	^ self subclassResponsibility.
+	self subclassResponsibility.
 ]
 
 { #category : 'as yet unclassified' }
 Entity >> getMaxBoundary [
 
-	^self subclassResponsibility.
+	self subclassResponsibility.
 ]
 
 { #category : 'as yet unclassified' }
@@ -181,6 +198,12 @@ Entity >> initialize [
 	direction := Vector module: 0 direction: 0.
 	aceleration := Vector module: 0 direction: 0.
 	collisions := GOrderedCollection new.
+]
+
+{ #category : 'testing' }
+Entity >> isAnimatedEntity [
+
+	self subclassResponsibility
 ]
 
 { #category : 'testing' }
@@ -205,6 +228,12 @@ Entity >> isLeaveOrEnterCamera [
 			]
 		]
 	]
+]
+
+{ #category : 'testing' }
+Entity >> isStaticEntity [
+
+	self subclassResponsibility.
 ]
 
 { #category : 'actions api' }
@@ -249,9 +278,18 @@ Entity >> notCollision [
 Entity >> save: aStream [
 	"Retorna la información de la entidad en array de bytes para
 	 podes ser posteriormente salvado en un archivo"
-	aStream
-		nextPutAll: position x asFloat asIEEE32BitWord asByteArray;
-		nextPutAll: position y asFloat asIEEE32BitWord asByteArray.
+	
+	" Name "
+	GameEngine on: aStream nextPutString: name. 
+		
+	" Posición"
+	GameEngine
+		on: aStream nextPutFloat: (position x);
+		on: aStream nextPutFloat: (position y).
+		
+	" Nombre archivo textura."
+	GameEngine on: aStream nextPutString: textureFileName.
+	
 	gravity save: aStream.
 ]
 
@@ -278,6 +316,7 @@ Entity >> setGravity: aVector [
 { #category : 'initialization' }
 Entity >> setName: aString [
 
+	(aString size) ifTrue: [ self error: 'Nombre de la entidad debe tener no más de 255 caracteres' ].
 	name := aString.
 ]
 
@@ -300,4 +339,16 @@ Entity >> setTexture: pathTextureFile with: aRenderer [
 	
 	renderer := aRenderer.
 	texture := renderer createStaticTextureFromForm: (ImageReadWriter formFromFileNamed: pathTextureFile)
+]
+
+{ #category : 'accessing' }
+Entity >> textureFileName [
+
+	^ textureFileName
+]
+
+{ #category : 'accessing' }
+Entity >> textureFileName: anObject [
+
+	textureFileName := anObject
 ]

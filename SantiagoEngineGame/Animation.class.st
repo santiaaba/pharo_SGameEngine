@@ -19,7 +19,6 @@ Class {
 		'deliveryTime',
 		'loop',
 		'index',
-		'size',
 		'timeBetweenFrame',
 		'speedFactor',
 		'boundary'
@@ -28,6 +27,19 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'private' }
+Animation class >> loadFrom: aStream [
+
+	| amountOfFrames frame frames |
+	frames := OrderedCollection new.
+	amountOfFrames := GameEngine readByteOn: aStream.
+	1 to: amountOfFrames do: [ :f |
+		frame := Frame loadFrom: aStream.
+		frames add: frame.
+	].
+	^(self new) setFrames: frames.
+]
+
 { #category : 'adding' }
 Animation >> addFrame: aFrame [
 	"Agrega un frame a la animación. Recalculamos el boundary
@@ -35,8 +47,7 @@ Animation >> addFrame: aFrame [
 	
 	frames add: aFrame.
 	index := 1.
-	size := frames size.
-	timeBetweenFrame := 1000 / size.
+	timeBetweenFrame := 1000 / frames size.
 	self recalculateBoundary.
 ]
 
@@ -86,7 +97,6 @@ Animation >> initialize [
 	index := 0.
 	loop := true.
 	deliveryTime := 0.
-	size := 0.
 	timeBetweenFrame := 0.
 	speedFactor := 1.
 ]
@@ -95,15 +105,6 @@ Animation >> initialize [
 Animation >> isEnded [
 
 	^ index = frames size
-]
-
-{ #category : 'actions api' }
-Animation >> load: arg1 [
-
-	| tmp1 tmp2 |
-	tmp1 := (arg1 next: 1) byteAt: 1 asNumber.
-	tmp2 := tmp1.
-	0 to: tmp2 do: [ :tmp3 | frames add: (Frame new load: arg1) ]
 ]
 
 { #category : 'as yet unclassified' }
@@ -127,10 +128,17 @@ Animation >> resetAnimation [
 ]
 
 { #category : 'actions' }
-Animation >> save: arg1 [
+Animation >> save: aStream [
+	
+	GameEngine on: aStream nextPutByte: (frames size).
+	frames do: [ :f | f save: aStream ]
+]
 
-	arg1 nextPutAll: frames size asByteArray.
-	frames do: [ :f | f save: arg1 ]
+{ #category : 'initialization' }
+Animation >> setFrames: aOrderedCollection [
+
+	frames := aOrderedCollection.
+	
 ]
 
 { #category : 'accessing' }

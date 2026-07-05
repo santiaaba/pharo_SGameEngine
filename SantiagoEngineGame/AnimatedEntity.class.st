@@ -17,6 +17,21 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'private' }
+AnimatedEntity class >> loadFrom: aStream [
+
+	| accountAnimations animation animations |
+	
+	"Cargamos las animaciones"
+	animations := OrderedCollection new.
+	accountAnimations := GameEngine readByteOn: aStream.
+	1 to: accountAnimations do: [ :i |
+		animation := Animation loadFrom: aStream.
+		animations add: animation.
+	].
+	^(self new) setAnimations: animations
+]
+
 { #category : 'adding' }
 AnimatedEntity >> addAnimation: anAnimation [
 	"Agrega una animación a la coleccion de animaciones."
@@ -97,10 +112,42 @@ AnimatedEntity >> initialize [
 	currentAnimation := nil.
 ]
 
+{ #category : 'testing' }
+AnimatedEntity >> isAnimatedEntity [
+
+	^true.
+]
+
+{ #category : 'testing' }
+AnimatedEntity >> isStaticEntity [ 
+
+	^false.
+]
+
+{ #category : 'actions' }
+AnimatedEntity >> save: aStream [
+	" Salvamos la entidad animada"
+	
+	"Indicamos con un solo byte el tipo de entidad animada"
+	GameEngine on: aStream nextPutByte: 1.
+	super save: aStream.
+	
+	"Salvamos las animaciones"
+	GameEngine on: aStream nextPutByte: animations size.
+	animations do: [ :a | a save: aStream ]
+]
+
 { #category : 'initialization' }
 AnimatedEntity >> setAnimationIndex: anIndex [
 	"Determina cual de todas las animaciones que reconoce la entidad
 	 es la que se debe comenzar a utilizar."
 	
 	currentAnimation := animations at: anIndex.
+]
+
+{ #category : 'initialization' }
+AnimatedEntity >> setAnimations: aOrderedCollection [
+
+	animations := aOrderedCollection.
+	currentAnimation := 1.
 ]

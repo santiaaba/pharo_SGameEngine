@@ -58,18 +58,15 @@ Scene >> layers [
 ]
 
 { #category : 'private' }
-Scene >> loadFrom: arg1 [
+Scene >> loadFrom: fileName [
 
-	| tmp1 tmp2 tmp3 tmp4 |
-	tmp1 := arg1 asFileReference binaryReadStream.
-	tmp1 position: 1.
-	tmp2 := (tmp1 next: 2) asNumber.
-	tmp4 := tmp2.
-	0 to: tmp4 do: [ :tmp5 |
-		tmp3 := (tmp1 next: 1) asNumber.
-		tmp3 = 1
-			ifTrue: [ (layers at: 1) add: (AnimatedEntity new load: tmp1) ]
-			ifFalse: [ (layers at: 1) add: (StaticEntity new load: tmp1) ] ]
+	| aStream amountLayers |
+	aStream := fileName asFileReference binaryReadStream.
+	aStream position: 1.
+	amountLayers := GameEngine readByteOn: aStream.
+	1 to: amountLayers do: [
+		layers add: (Layer loadFrom: aStream).
+	]
 ]
 
 { #category : 'accessing' }
@@ -91,6 +88,7 @@ Scene >> saveOn: fileName [
 	| aStream |
 	aStream := fileName asFileReference binaryWriteStream.
 	aStream position: 1.
+	GameEngine on: aStream nextPutByte: layers size.
 	(layers at: 1) save: aStream.
 	aStream close
 ]

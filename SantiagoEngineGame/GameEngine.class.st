@@ -23,9 +23,25 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'converting' }
+GameEngine class >> asIEEE64BitWord: aNumber [
+	"Resuelve el problema del método que lleva el mismo nombre para
+	 la clase Float. La mejora es que si el float es 0.0, retorna un
+	 BitStream completo de tamaño 32"
+	
+	| a |
+	a := aNumber asFloat.
+	(a isZero) ifTrue: [
+		^ '0000000000000000000000000000000000000000000000000000000000000000' asByteString.
+	] ifFalse: [
+		^a asIEEE64BitWord
+	]
+]
+
 { #category : 'accessing' }
 GameEngine class >> debug [
 
+	debug ifNil: [ ^false ].
 	^debug.
 ]
 
@@ -41,6 +57,73 @@ GameEngine class >> deltaTime [
 
 	deltaTime ifNil: [	deltaTime := 0.009].
 	^deltaTime
+]
+
+{ #category : 'streams' }
+GameEngine class >> on: aStream nextPutByte: aInteger [
+	"Salva un numero entero positivo como un byte
+	 siempre y cuando llegue hasta 255"
+	| a |
+	a := (aInteger asByteArrayOfSize: 1) at:1.
+	aStream nextPut: a.
+]
+
+{ #category : 'streams' }
+GameEngine class >> on: aStream nextPutFloat: aFloat [
+	"Salva un numero entero como array de 8 bytes"
+
+	aStream nextPutAll: (self asIEEE64BitWord: aFloat).
+	
+]
+
+{ #category : 'streams' }
+GameEngine class >> on: aStream nextPutLongInt: aNumber [
+	"Salva un numero entero como un entero de 4 bytes"
+	| bytes |
+	bytes := ByteArray new: 4.
+	bytes integerAt: 1 put: aNumber size: 4 signed: true.
+	aStream nextPutAll: (bytes).
+]
+
+{ #category : 'streams' }
+GameEngine class >> on: aStream nextPutString: aString [
+	"Salva un string"
+	
+	| a |
+	a := ByteArray new: 4.
+	a integerAt: 1 put: (aString size) size: 4 signed: false.
+	aStream nextBytesPutAll: a.
+	aStream nextBytesPutAll: aString.
+]
+
+{ #category : 'streams' }
+GameEngine class >> readByteOn: aStream [
+	"Lee el siguiente byte del stream"
+	
+	^aStream next.
+]
+
+{ #category : 'streams' }
+GameEngine class >> readFloatOn: aStream [
+	"Lee el siguiente byte del stream"
+	
+	^(aStream next: 8) doubleAt: 1 bigEndian: false.
+]
+
+{ #category : 'streams' }
+GameEngine class >> readLongIntOn: aStream [
+	"Lee el siguiente byte del stream"
+	
+	^(aStream next: 4) longAt:1 bigEndian: false.
+]
+
+{ #category : 'streams' }
+GameEngine class >> readStringOn: aStream [
+	"Lee el string"
+	
+	| s |
+	s := (aStream next: 4) longAt:1 bigEndian: false.
+	^aStream next: s
 ]
 
 { #category : 'initialization' }

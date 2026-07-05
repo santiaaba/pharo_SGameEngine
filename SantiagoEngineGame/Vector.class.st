@@ -14,6 +14,15 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'actions api' }
+Vector class >> loadFrom: aStream [
+
+	| module direction |
+	module := GameEngine readFloatOn: aStream.
+	direction := GameEngine readFloatOn: aStream.
+	^self module: module direction: direction.
+]
+
 { #category : 'as yet unclassified' }
 Vector class >> module: aNumber direction: aNomberDirection [
 
@@ -346,18 +355,6 @@ Vector >> invert [
 	^ Vector module: module direction: d.
 ]
 
-{ #category : 'actions api' }
-Vector >> load: arg1 [
-
-	| tmp1 tmp2 |
-	tmp1 := (arg1 next: 4) floatAt: 1 bigEndian: true.
-	tmp2 := (arg1 next: 4) floatAt: 1 bigEndian: true.
-	module := tmp1 @ tmp2.
-	tmp1 := (arg1 next: 4) floatAt: 1 bigEndian: true.
-	tmp2 := (arg1 next: 4) floatAt: 1 bigEndian: true.
-	direction := tmp1 @ tmp2
-]
-
 { #category : 'accessing' }
 Vector >> module [
 
@@ -383,9 +380,9 @@ Vector >> movePoint: aPoint [
 { #category : 'actions' }
 Vector >> save: aStream [
 
-	aStream
-		nextPutAll: module asFloat asIEEE32BitWord asByteArray;
-		nextPutAll: direction asFloat asIEEE32BitWord asByteArray
+	GameEngine
+		on: aStream nextPutFloat: module;
+		on: aStream nextPutFloat: direction.
 ]
 
 { #category : 'as yet unclassified' }

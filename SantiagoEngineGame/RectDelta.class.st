@@ -16,6 +16,17 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'actions api' }
+RectDelta class >> loadFrom: aStream [
+
+	| p1 p2 d|
+	
+	p1 := (GameEngine readLongIntOn: aStream)@(GameEngine readLongIntOn: aStream).
+	p2 := (GameEngine readLongIntOn: aStream)@(GameEngine readLongIntOn: aStream).
+	d := (GameEngine readLongIntOn: aStream)@(GameEngine readLongIntOn: aStream).
+	^ self origin: p1 corner: p2 delta: d.
+]
+
 { #category : 'as yet unclassified' }
 RectDelta class >> origin: anOriginPoint corner: aCornerPoint delta: aDeltaPoint [
 
@@ -66,6 +77,19 @@ RectDelta >> merge: aRectDelta [
 	r := rect merge: (aRectDelta getRect).
 	d := (delta x min:(aRectDelta getDelta x))@(delta y min:(aRectDelta getDelta y)).
 	^ RectDelta rect: r delta: d.
+]
+
+{ #category : 'actions' }
+RectDelta >> save: aStream [
+
+	GameEngine
+		on: aStream nextPutLongInt: (rect origin x);
+		on: aStream nextPutLongInt: (rect origin y);
+		on: aStream nextPutLongInt: (rect corner x);
+		on: aStream nextPutLongInt: (rect corner y);
+		
+		on: aStream nextPutLongInt: (delta x);
+		on: aStream nextPutLongInt: (delta y).
 ]
 
 { #category : 'initialization' }

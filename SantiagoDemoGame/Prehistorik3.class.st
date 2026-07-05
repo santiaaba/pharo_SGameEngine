@@ -14,8 +14,10 @@ Prehistorik3 class >> start [
 { #category : 'initialization' }
 Prehistorik3 >> initialize [
 
-	| layer player ground collider animation |
+	"| layer player ground collider animation |"
 	super initialize.
+	scene loadFrom: 'scene1.dat'.
+	"
 	ground := StaticEntity new: 'grounds.jpg' render: renderer.
 	ground rectCut: (Rectangle origin: 0@2152 corner: 5004@2751) delta: (0)@(0).
 	ground setPosition:(0@280).
@@ -40,4 +42,5 @@ Prehistorik3 >> initialize [
 	
 	scene add: player intoLayer: 1.
 	scene saveOn: 'scene1.dat'.
+	"
 ]

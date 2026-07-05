@@ -1,5 +1,5 @@
 "
-Represento un conjunto de áreas de colisión. Estoy formado por un conjunto de objetos RectDelta respecto de una posición y un RectDelta que los circunscribe a todos llamado Boundary
+Represento un conjunto de áreas de colisión. Estoy formado por un conjunto de objetos RectDelta respecto de una posición y un RectDelta que los circunscribe a todos llamado Boundary. Admito un máximo de 255 sectores.
 
 ##Boundary
 Su función es ser el primer elemento de detección de ""posible colisión"" para minimizar cálculos. Si ocurre una colisión entre los boundary de dos Coliders, entonces aplicamos esfuerzo de cálculo verificando cual de todos los rectánulos de ambos colaiders son los que realmente colisionaron. Puede pasar que no se encuentre ninguno y entonces no hay colisión aún cuando la hay entre los boundary.
@@ -20,6 +20,19 @@ Class {
 	#category : 'SantiagoEngineGame',
 	#package : 'SantiagoEngineGame'
 }
+
+{ #category : 'actions api' }
+Collider class >> loadFrom: aStream [
+
+	| s c |
+	c := self new.
+	c setSolid: (GameEngine readByteOn: aStream) = 1.
+	1 to: (GameEngine readByteOn: aStream) do: [ :i |
+		s := RectDelta loadFrom: aStream.
+		c addSector:s.
+	].
+	^c
+]
 
 { #category : 'instance creation' }
 Collider class >> newPosition: aPoint [
@@ -47,11 +60,25 @@ Collider >> actualizeSectors [
 ]
 
 { #category : 'adding' }
+Collider >> addSector: aRectDelta [
+	"Agrego un sector al collider. El delta siempre se ha de considerar respecto
+	 del punto que determina la posición del collider. Generalmente vamos
+	 a desear que dicho punto concida con el de la Entity que utiliza el collider.
+	 Admito un máximo de 255 sectores."
+
+	(sectors size = 255) ifTrue: [ self error: 'Collider no admite más de 255 sectores' ].
+	sectors add: aRectDelta.
+	self recalculateBoundary.
+]
+
+{ #category : 'adding' }
 Collider >> addSectorOrigin: anOrigin corner: aCorner delta: aDelta [
 	"Agrego un sector al collider. El delta siempre se ha de considerar respecto
 	 del punto que determina la posición del collider. Generalmente vamos
-	 a desear que dicho punto concida con el de la Entity que utiliza el collider."
+	 a desear que dicho punto concida con el de la Entity que utiliza el collider.
+	 Admito un máximo de 255 sectores."
 
+	(sectors size = 255) ifTrue: [ self error: 'Collider no admite más de 255 sectores' ].
 	sectors add: (RectDelta origin: anOrigin corner: aCorner delta: aDelta).
 	self recalculateBoundary.
 ]
@@ -113,6 +140,7 @@ Collider >> initialize [
 	sectors := GOrderedCollection new.
 	boundary := RectDelta origin: 0@0 corner: 0@0 delta: 0@0.
 	solid := false.
+	lastPosition := 0@0.
 ]
 
 { #category : 'testing' }
@@ -152,6 +180,17 @@ Collider >> recalculateBoundary [
 		b ifNil: [ b := s ] ifNotNil:[ b := b merge: s].
 	].
 	boundary := b.
+]
+
+{ #category : 'actions' }
+Collider >> save: aStream [
+	"Salva la información de un collider como un array de bytes"
+	
+	"Si es o no sólido"
+	GameEngine on: aStream nextPutByte: (ByteArray with: solid asBit).
+	"Las secciones"
+	GameEngine on: aStream nextPutByte: (sectors size).
+	sectors do: [ :sector | sector save: aStream ]
 ]
 
 { #category : 'accessing' }
