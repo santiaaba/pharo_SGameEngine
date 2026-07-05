@@ -2,6 +2,9 @@
 ## Animaciones
 
 Las animaciones están formadas por Frames. Cada animación dura 1 segundo. Así, si una animación está conformada por 2 frames, cada uno debe ser renderizado con 0,5 segundos de diferencia. Si una animación está formada por 20 frames, cada uno deber ser renderizado con 0,05 segundos de diferencia entre ellos. A esto se le suma el deltaTime del Engine, que representa en milisegundos el tiempo en que el motor renderiza cada Fotograma en pantalla.
+
+## Boundary y AnimatedBoundary
+Tenemos dos boundary. El del frame actual y el de la animación toda (el boundary que circunscribe a todos los frames). El primero es utilizado para detectar colisiones. El segundo para determinar si una entidad ha salido por completo de la cámara o está ingresando a la misma.
 "
 Class {
 	#name : 'AnimatedEntity',
@@ -14,6 +17,21 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'private' }
+AnimatedEntity class >> loadFrom: aStream [
+
+	| accountAnimations animation animations |
+	
+	"Cargamos las animaciones"
+	animations := OrderedCollection new.
+	accountAnimations := GameEngine readByteOn: aStream.
+	1 to: accountAnimations do: [ :i |
+		animation := Animation loadFrom: aStream.
+		animations add: animation.
+	].
+	^(self new) setAnimations: animations
+]
+
 { #category : 'adding' }
 AnimatedEntity >> addAnimation: anAnimation [
 	"Agrega una animación a la coleccion de animaciones."
@@ -24,7 +42,8 @@ AnimatedEntity >> addAnimation: anAnimation [
 
 { #category : 'accessing' }
 AnimatedEntity >> boundary [
-	"Retorna el espacio que ocupa en la escena el frame actual de la animación"
+	"Retorna el Rectangle que ocupa en la escena el frame
+	 actual de la animación en curso."
 	
 	^currentAnimation getFrame getRectDelta getRectTranslateTo: position
 ]
@@ -35,7 +54,7 @@ AnimatedEntity >> do: aGameEngine [
 	
 	(super do: aGameEngine) ifTrue: [
 		| c |
-		c := currentAnimation getFrame getCollider.
+		c := currentAnimation getFrameAndNext getCollider.
 		c ifNotNil: [ c actualizePosition: position]
 	]
 ]
@@ -45,7 +64,7 @@ AnimatedEntity >> draw: aRenderer using: aCamera [
 	" Dibuja la entidad en base a la animación actualmente seleccionada"
 	
 	| frame rectCut rectDraw|
-	frame := currentAnimation getFrame.
+	frame := currentAnimation getFrameAndNext.
 	rectCut := frame getRectDelta getRect.
 	rectDraw := (frame getRectTranslateTo: position) translateBy: aCamera viewport getRect origin.
 	aRenderer drawTexture: texture rectangle: rectCut in: rectDraw.
@@ -62,16 +81,25 @@ AnimatedEntity >> drawDebug: aRenderer using: aCamera [
 	
 	| frame rectDraw |
 	super drawDebug: aRenderer using: aCamera.
-	frame := currentAnimation getFrame.
+	frame := currentAnimation getFrameAndNext.
 	rectDraw := (frame getRectTranslateTo: position) translateBy: aCamera viewport getRect origin.
 	aRenderer color: Color yellow;
 		drawRectangle: rectDraw.
 	aRenderer color: Color white.
 ]
 
+{ #category : 'accessing' }
+AnimatedEntity >> getCollider [
+	"Retorna el collider en base al frame actual.
+	 Cada frame tiene su propio collider."
+	
+	 ^currentAnimation getFrame.
+]
+
 { #category : 'as yet unclassified' }
 AnimatedEntity >> getMaxBoundary [
-	"Retorna el rectángulo que circunscribe a todos los frames"
+	"Retorna el Rectángulo que circunscribe a todos los frames de
+	 la animación en curso. "
 	
 	^currentAnimation getAnimationBoundary: position
 ]
@@ -84,8 +112,42 @@ AnimatedEntity >> initialize [
 	currentAnimation := nil.
 ]
 
+{ #category : 'testing' }
+AnimatedEntity >> isAnimatedEntity [
+
+	^true.
+]
+
+{ #category : 'testing' }
+AnimatedEntity >> isStaticEntity [ 
+
+	^false.
+]
+
+{ #category : 'actions' }
+AnimatedEntity >> save: aStream [
+	" Salvamos la entidad animada"
+	
+	"Indicamos con un solo byte el tipo de entidad animada"
+	GameEngine on: aStream nextPutByte: 1.
+	super save: aStream.
+	
+	"Salvamos las animaciones"
+	GameEngine on: aStream nextPutByte: animations size.
+	animations do: [ :a | a save: aStream ]
+]
+
 { #category : 'initialization' }
 AnimatedEntity >> setAnimationIndex: anIndex [
-
+	"Determina cual de todas las animaciones que reconoce la entidad
+	 es la que se debe comenzar a utilizar."
+	
 	currentAnimation := animations at: anIndex.
+]
+
+{ #category : 'initialization' }
+AnimatedEntity >> setAnimations: aOrderedCollection [
+
+	animations := aOrderedCollection.
+	currentAnimation := 1.
 ]

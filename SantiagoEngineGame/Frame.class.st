@@ -18,6 +18,16 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'private' }
+Frame class >> loadFrom: aStream [
+
+	| rectCut|
+	
+	rectCut := RectDelta loadFrom: aStream.
+	"collider := Collider loadFrom: aStream."
+	^ self new setRectDelta: rectCut
+]
+
 { #category : 'accessing' }
 Frame >> getCollider [
 
@@ -56,13 +66,10 @@ Frame >> load: arg1 [
 ]
 
 { #category : 'actions' }
-Frame >> save: arg1 [
+Frame >> save: aStream [
 
-	arg1
-		nextPutAll: rectCut origin x asFloat asIEEE32BitWord asByteArray;
-		nextPutAll: rectCut origin y asFloat asIEEE32BitWord asByteArray;
-		nextPutAll: rectCut corner x asFloat asIEEE32BitWord asByteArray;
-		nextPutAll: rectCut origin y asFloat asIEEE32BitWord asByteArray
+	rectCut save: aStream.
+	collider save: aStream.
 ]
 
 { #category : 'as yet unclassified' }

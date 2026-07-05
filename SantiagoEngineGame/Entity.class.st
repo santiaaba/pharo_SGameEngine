@@ -15,6 +15,7 @@ Class {
 	#instVars : [
 		'name',
 		'position',
+		'textureFileName',
 		'texture',
 		'gravity',
 		'direction',
@@ -46,10 +47,26 @@ Entity class >> debug: aBoolean [
 	debug := aBoolean
 ]
 
+{ #category : 'private' }
+Entity class >> loadFrom: aStream [
+
+	| typeOfEntity entity |
+	typeOfEntity := GameEngine readByteOn: aStream.
+	(typeOfEntity = 0) ifTrue: [
+		entity := StaticEntity loadFrom: aStream.
+	].
+	(typeOfEntity = 1) ifTrue: [
+		entity := AnimatedEntity loadFrom: aStream.
+	].
+	^entity.
+]
+
 { #category : 'instance creation' }
 Entity class >> new: aTexture render: aRenderer [
-
-	^ self new setTexture: aTexture with: aRenderer
+	"Crea una entidad utilizando un archivo de texturas y un renderer"
+	
+	(aTexture size > 255) ifTrue: [ self error:'Ruta del archivo de texturas debe tener menos de 256 caracteres' ].
+	^ self new setTexture: aTexture with: aRenderer; textureFileName: aTexture.
 ]
 
 { #category : 'initialization' }
@@ -68,27 +85,28 @@ Entity >> addDirection: aVector [
 
 { #category : 'accessing' }
 Entity >> boundary [
-
 	" Retorna el SDL_Rect que circunscribe al sprite "
+	
 	self subclassResponsibility.
 ]
 
 { #category : 'as yet unclassified' }
 Entity >> collisionTo: anotherEntity using: aVector [
-	"Verifica si se ha dado una colisión entre dos entidades
+	"Verifica si se ha dado una nueva colisión entre dos entidades
 	 que poseen collider. De producirse, se genera un evento
 	 y se recuerda que la entidad está colisionando con otra
 	 para no volver a evaluar la colisión en el siguiente loop
 	 y además para poder reconocer el evento cuando dejan de colisionar"
 	
 	|c1 c2 collision |
-	(collisions includes: anotherEntity) ifTrue: [ ^nil ].
+	
 	c1 := self getCollider.
 	c2 := anotherEntity getCollider.
 	(c1 isNotNil and: c2 isNotNil) ifTrue:[
 		collision := c1 collisionTo: c2 using: aVector.
 		collision ifNotNil:[
-			collisions add: anotherEntity. 
+			collision originEntity: self; targetEntity: anotherEntity.
+			Transcript show: 'colision detectada'; cr. 
 		]
 	].
 	^collision.
@@ -100,17 +118,34 @@ Entity >> do: anotherEntities [
 	 de realizar en el fotograma actual el juego. Retorna true
 	 si ha cambiado su posición"
 	
-	| changePosition newPoint collision |
+	| changePosition newPoint newDirection collision |
 	
-	direction := direction + (gravity * (GameEngine deltaTime)).
-	(direction module ~= 0) ifTrue: [
+	" Hacemos que el vector dirección se vea cada vez más afectado
+	  por la gravedad siempre y cuando no estemos colisionado en sentido
+	  de la gravedad."
+	newDirection := direction + (gravity * (GameEngine deltaTime)).
+	(newDirection module ~= 0) ifTrue: [
+		"Nos movemos de posición. Podría darse una colisión"
 		anotherEntities do: [ :e |
-			collision := self collisionTo: e using: (direction * (GameEngine deltaTime)).
-			"Actualizamos el vector dirección con el potencial nuevo vector"
-			collision ifNotNil: [ direction := collision resultingVector	].
+			"Verificamos si no estamos ya colisionando contra la entidad"
+			collisions detect: [ :a | a targetEntity = e ] ifFound: [ :a |
+				"Ya estamos colisionando contra la entidad. corregimos
+				 el vector newDirection para anular la componente que va en
+				 la dirección por la que estamos colisionando."
+				newDirection := a fixVector: newDirection.
+			] ifNone: [
+				"Buscamos una nueva posible colision contra la entidad"
+				collision := self collisionTo: e using: (newDirection * (GameEngine deltaTime)).
+				collision ifNotNil: [
+					"Se produjo una colisión nueva"
+					collisions add: collision.
+					newDirection := collision resultingVector.
+				]				
+			]
 		] without: self.
 	].
-	 
+	
+	direction := newDirection.
 	newPoint := (direction * (GameEngine deltaTime)) movePoint: position.
 	changePosition := position ~= newPoint.
 	position := newPoint.
@@ -119,7 +154,7 @@ Entity >> do: anotherEntities [
 	self isLeaveOrEnterCamera.
 		
 	"Verificamos si deja de chocar con otra entidad"
-	collisions do: [ :e | self notCollisionTo: e ].
+	self notCollision.
 	
 	^changePosition.
 ]
@@ -138,13 +173,13 @@ Entity >> drawDebug: aRenderer using: aCamera [
 { #category : 'accessing' }
 Entity >> getCollider [
 
-	^ self subclassResponsibility.
+	self subclassResponsibility.
 ]
 
 { #category : 'as yet unclassified' }
 Entity >> getMaxBoundary [
 
-	^self subclassResponsibility.
+	self subclassResponsibility.
 ]
 
 { #category : 'as yet unclassified' }
@@ -162,7 +197,13 @@ Entity >> initialize [
 	gravity := Vector module: 0 direction: 0.
 	direction := Vector module: 0 direction: 0.
 	aceleration := Vector module: 0 direction: 0.
-	collisions := OrderedCollection new.
+	collisions := GOrderedCollection new.
+]
+
+{ #category : 'testing' }
+Entity >> isAnimatedEntity [
+
+	self subclassResponsibility
 ]
 
 { #category : 'testing' }
@@ -189,6 +230,12 @@ Entity >> isLeaveOrEnterCamera [
 	]
 ]
 
+{ #category : 'testing' }
+Entity >> isStaticEntity [
+
+	self subclassResponsibility.
+]
+
 { #category : 'actions api' }
 Entity >> load: aStream [
 	"Setea las características de la entidad en base a un Stream de datos"
@@ -211,31 +258,39 @@ Entity >> move: aPoint [
 ]
 
 { #category : 'as yet unclassified' }
-Entity >> notCollisionTo: anotherEntity [
-	"Verifica que no esté colisionado contra la entidad anotherEntity.
-	 De producirse, se genera un evento y se deja de recordar que
-	 la entidad está colisionando con la otra"
+Entity >> notCollision [
+	"Verifica que ya no se estén producioendo colisiones
+	 entre la entidad y otra entidad con la cual si estaba
+	 colisionando."
 	
-	|c1 c2|
+	| c1 |
 	c1 := self getCollider.
-	c2 := anotherEntity getCollider.
-	((c1 isNil or: c2 isNil) or:((c1 isCollisionTo: c2) isNil)) ifTrue:[
-		collisions remove: anotherEntity.
-		^ EntityLostCollisionEvent
-				newEvent: self 
-				collisionTo: anotherEntity.
-	].
+	collisions := collisions reject: [ :c |
+		| c2 |
+		c2 := c targetEntity getCollider.
+		(c1 isNil or: (c2 isNil or:(c1 isCollisionTo: c2)) isNil)
+	] do: [ :c |
+		Transcript show:'Deja de colisionar'; cr.
+	]
 ]
 
 { #category : 'actions' }
 Entity >> save: aStream [
 	"Retorna la información de la entidad en array de bytes para
 	 podes ser posteriormente salvado en un archivo"
-	aStream
-		nextPutAll: position x asFloat asIEEE32BitWord asByteArray;
-		nextPutAll: position y asFloat asIEEE32BitWord asByteArray.
+	
+	" Name "
+	GameEngine on: aStream nextPutString: name. 
+		
+	" Posición"
+	GameEngine
+		on: aStream nextPutFloat: (position x);
+		on: aStream nextPutFloat: (position y).
+		
+	" Nombre archivo textura."
+	GameEngine on: aStream nextPutString: textureFileName.
+	
 	gravity save: aStream.
-	direction save: aStream
 ]
 
 { #category : 'initialization' }
@@ -261,6 +316,7 @@ Entity >> setGravity: aVector [
 { #category : 'initialization' }
 Entity >> setName: aString [
 
+	(aString size) ifTrue: [ self error: 'Nombre de la entidad debe tener no más de 255 caracteres' ].
 	name := aString.
 ]
 
@@ -283,4 +339,16 @@ Entity >> setTexture: pathTextureFile with: aRenderer [
 	
 	renderer := aRenderer.
 	texture := renderer createStaticTextureFromForm: (ImageReadWriter formFromFileNamed: pathTextureFile)
+]
+
+{ #category : 'accessing' }
+Entity >> textureFileName [
+
+	^ textureFileName
+]
+
+{ #category : 'accessing' }
+Entity >> textureFileName: anObject [
+
+	textureFileName := anObject
 ]

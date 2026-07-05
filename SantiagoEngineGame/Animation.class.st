@@ -8,7 +8,7 @@ Nos valemos del deltaTime de la Clase GameEngine el cual es el tiempo en miliseg
 La clase Animation debe entregar los frame mediante el método getFrame de tal forma que se pase al siguiente frame cuando .... completar
 
 ##Boundary
-Es el rectángulo que circunscribe a lo que ocupan todos los frames de la animación.
+Es el rectángulo que circunscribe a lo que ocupan todos los frames de la animación. SE utiliza para detectar una posible colisión o para determinar cuando entra o sale de cámara una entidad.
 "
 Class {
 	#name : 'Animation',
@@ -19,7 +19,6 @@ Class {
 		'deliveryTime',
 		'loop',
 		'index',
-		'size',
 		'timeBetweenFrame',
 		'speedFactor',
 		'boundary'
@@ -28,14 +27,27 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'private' }
+Animation class >> loadFrom: aStream [
+
+	| amountOfFrames frame frames |
+	frames := OrderedCollection new.
+	amountOfFrames := GameEngine readByteOn: aStream.
+	1 to: amountOfFrames do: [ :f |
+		frame := Frame loadFrom: aStream.
+		frames add: frame.
+	].
+	^(self new) setFrames: frames.
+]
+
 { #category : 'adding' }
 Animation >> addFrame: aFrame [
-	"Agrega un frame a la animación."
+	"Agrega un frame a la animación. Recalculamos el boundary
+	 que circunscribe a todos los frames."
 	
 	frames add: aFrame.
 	index := 1.
-	size := frames size.
-	timeBetweenFrame := 1000 / size.
+	timeBetweenFrame := 1000 / frames size.
 	self recalculateBoundary.
 ]
 
@@ -57,6 +69,13 @@ Animation >> getAnimationBoundary: aPoint [
 
 { #category : 'private - display' }
 Animation >> getFrame [
+	"Retorna el frame actual sin avanzar al siguiente"
+	
+	^currentFrame
+]
+
+{ #category : 'private - display' }
+Animation >> getFrameAndNext [
 	"Retorna el frame actual y al hacerlo, avanza al siguiente frame.
 	 Si loop es falso, allí se detiene. Si loop es verdadero, al llegar
 	 al último frame, regresa al primero."
@@ -78,7 +97,6 @@ Animation >> initialize [
 	index := 0.
 	loop := true.
 	deliveryTime := 0.
-	size := 0.
 	timeBetweenFrame := 0.
 	speedFactor := 1.
 ]
@@ -89,35 +107,18 @@ Animation >> isEnded [
 	^ index = frames size
 ]
 
-{ #category : 'actions api' }
-Animation >> load: arg1 [
-
-	| tmp1 tmp2 |
-	tmp1 := (arg1 next: 1) byteAt: 1 asNumber.
-	tmp2 := tmp1.
-	0 to: tmp2 do: [ :tmp3 | frames add: (Frame new load: arg1) ]
-]
-
-{ #category : 'as yet unclassified' }
-Animation >> nextFrame [
-
-	index = frames size
-		ifTrue: [ loop ifTrue: [ index := 1 ] ]
-		ifFalse: [ index := index + 1 ]
-]
-
 { #category : 'as yet unclassified' }
 Animation >> recalculateBoundary [
-	"En base a los frames de la animación, recalcula el
-	 boundary a todos ellos suponiendo una posiión 0@0."
+	"Método privado. En base a los frames de la animación,
+	 recalcula el boundary a todos ellos."
 	
-	| b |
+	| b r |
 	b := nil.
 	frames do: [ :frame |
-		frame translateTo: 0@0.
-		b ifNil: [ b := frame ] ifNotNil:[ b := b merge: frame].
+		r := frame getRectDelta.
+		b ifNil: [ b := r ] ifNotNil:[ b := b merge: r].
 	].
-	boundary := b.
+	boundary := r.
 ]
 
 { #category : 'initialization' }
@@ -127,10 +128,17 @@ Animation >> resetAnimation [
 ]
 
 { #category : 'actions' }
-Animation >> save: arg1 [
+Animation >> save: aStream [
+	
+	GameEngine on: aStream nextPutByte: (frames size).
+	frames do: [ :f | f save: aStream ]
+]
 
-	arg1 nextPutAll: frames size asByteArray.
-	frames do: [ :f | f save: arg1 ]
+{ #category : 'initialization' }
+Animation >> setFrames: aOrderedCollection [
+
+	frames := aOrderedCollection.
+	
 ]
 
 { #category : 'accessing' }

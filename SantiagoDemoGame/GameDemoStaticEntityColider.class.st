@@ -27,11 +27,11 @@ GameDemoStaticEntityColider >> initialize [
 	super initialize.
 	player1 := StaticEntity new: '2dcharacterSprite.png' render: renderer.
 	player1 rectCut: (Rectangle origin: 16@16 corner: 51@79) delta: -14@(-60).
-	player1 setPosition: 300@50.
+	player1 setPosition: 300@80.
 	player1 setName: 'player1'.
-	player1 setGravity: (Vector module: 0.1 direction: Float halfPi).
+	player1 setGravity: (Vector module: 0.5 direction: Float halfPi).
 	collider := Collider newPosition: player1 getPosition.
-	collider addSectorOrigin: 19@19 corner: 48@76 delta: (-14)@(-60).
+	collider addSectorOrigin: 19@19 corner: 48@76 delta: (-14)@(-56).
 	collider setSolid: true.
 	player1 setCollider: collider.
 	"player1 setDirection: (Vector module: 10 direction: (Float pi + (Float halfPi /2)))."
@@ -48,21 +48,25 @@ GameDemoStaticEntityColider >> initialize [
 	ground := StaticEntity new: 'grounds.jpg' render: renderer.
 	ground rectCut: (Rectangle origin: 0@2152 corner: 5004@2751) delta: (0)@(0).
 	ground setPosition:(0@280).
+	collider := Collider newPosition: ground getPosition.
+	collider addSectorOrigin: 0@0 corner: 600@20 delta: (0)@(80).
+	collider setSolid: true.
+	ground setCollider: collider.
 	
 	layer := Layer new.
 	scene addLayer: layer;
 		add: ground intoLayer: 1.
 	layer := Layer new.
 	scene addLayer: layer;
-		add: player1 intoLayer:2;
-		add: column intoLayer:2.
+		add: player1 intoLayer:1;
+		add: column intoLayer:1.
 ]
 
 { #category : 'as yet unclassified' }
 GameDemoStaticEntityColider >> onKeyPressEvent: anEvent [
 
 	"Arriba"
-	(anEvent scanCode = 82 ) ifTrue: [ player1 addDirection: (Vector module:5  direction:(Float halfPi + Float pi))].
+	(anEvent scanCode = 82 ) ifTrue: [ player1 addDirection: (Vector module:10  direction:(Float halfPi + Float pi))].
 	
 	"Abajo"
 	(anEvent scanCode = 81 ) ifTrue: [ player1 addDirection: (Vector module:2  direction:(Float halfPi))].

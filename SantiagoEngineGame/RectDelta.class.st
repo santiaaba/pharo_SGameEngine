@@ -16,6 +16,17 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'actions api' }
+RectDelta class >> loadFrom: aStream [
+
+	| p1 p2 d|
+	
+	p1 := (GameEngine readLongIntOn: aStream)@(GameEngine readLongIntOn: aStream).
+	p2 := (GameEngine readLongIntOn: aStream)@(GameEngine readLongIntOn: aStream).
+	d := (GameEngine readLongIntOn: aStream)@(GameEngine readLongIntOn: aStream).
+	^ self origin: p1 corner: p2 delta: d.
+]
+
 { #category : 'as yet unclassified' }
 RectDelta class >> origin: anOriginPoint corner: aCornerPoint delta: aDeltaPoint [
 
@@ -37,8 +48,9 @@ RectDelta >> getDelta [
 
 { #category : 'as yet unclassified' }
 RectDelta >> getRect [
-	"Retorna el rectángulo. El cual ya tiene aplicado el delta. Ya que
-	 al trasladarlo le aplicamos el delta."
+	"Retorna el rectángulo. Si se utiliza previamente translateTo: o translateBy:,
+	 el rectángulo obtenido por este método ya se encontrará en las coordenadas
+	 correctas"
 
 	^ rect
 ]
@@ -48,28 +60,36 @@ RectDelta >> getRectTranslateTo: aPoint [
 	"Retorna un objecto Rectangle transladado el mismo
 	 al punto que resulta de aPoint + delta"
 	
-	| with height p |
-	with := rect width.
-	height := rect height.
+	| p |
 	p := aPoint + delta.
-	^Rectangle origin: (aPoint + delta) corner: (with + p x)@(height + p y)
+	^Rectangle origin: p corner: (rect width + p x)@(rect height + p y)
 	 
 ]
 
 { #category : 'actions' }
 RectDelta >> merge: aRectDelta [
 	"Retorna un nuevo RectDelta resultado de circunscribir
-	 los dos rectángulos. El delta se obtiene considerando que
-	 los dos rectángulos poseen un mismo punto de referencia
-	 desde el cual arrancaría el punto origin."
+	 los dos rectángulos.
+	 El delta para el rectDelta resultante se calcula como:
+	 El delta el menor x y el delta del menor y."
 	
-	|r d|
+	| r d |
 	r := rect merge: (aRectDelta getRect).
-	
-	"El delta será el punto resultante del X más a
-	 la izquierda (el menor X) y el Y más arriba (el menor Y)"
 	d := (delta x min:(aRectDelta getDelta x))@(delta y min:(aRectDelta getDelta y)).
 	^ RectDelta rect: r delta: d.
+]
+
+{ #category : 'actions' }
+RectDelta >> save: aStream [
+
+	GameEngine
+		on: aStream nextPutLongInt: (rect origin x);
+		on: aStream nextPutLongInt: (rect origin y);
+		on: aStream nextPutLongInt: (rect corner x);
+		on: aStream nextPutLongInt: (rect corner y);
+		
+		on: aStream nextPutLongInt: (delta x);
+		on: aStream nextPutLongInt: (delta y).
 ]
 
 { #category : 'initialization' }
@@ -98,10 +118,6 @@ RectDelta >> translateBy: factor [
 RectDelta >> translateTo: aPoint [
 	"Translada el rectangulo al punto aPoint aplicando el delta."
 	
-	| with height p |
-	with := rect width.
-	height := rect height.
-	p := aPoint + delta.
-	rect := Rectangle origin: (aPoint + delta) corner: (with + p x)@(height + p y)
+	rect := self getRectTranslateTo: aPoint
 	 
 ]

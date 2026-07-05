@@ -14,6 +14,16 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'private' }
+StaticEntity class >> loadFrom: aStream [
+
+	| aRectCut aCollider|
+	
+	aRectCut := RectDelta loadFrom: aStream.
+	aCollider := Collider loadFrom: aStream.
+	^ ((self new) setRectCut: aRectCut) setCollider: aCollider
+]
+
 { #category : 'accessing' }
 StaticEntity >> boundary [
 	
@@ -25,11 +35,12 @@ StaticEntity >> boundary [
 StaticEntity >> do: aGameEngine [
 	"Realiza acciones propias de una StaticEntity"
 	
-	(super do: aGameEngine) ifTrue: [
-		rectDraw translateTo: position.
-		collider ifNotNil: [
-			collider actualizePosition: position.
-		]
+	(super do: aGameEngine) ifFalse: [ ].	
+	"Solo actualizamos los rectángulos de redraw y colliders
+	 si nos hemos desplezado. Es para minimizar cálculos"
+	rectDraw translateTo: position.
+	collider ifNotNil: [
+		collider actualizePosition: position.
 	]
 ]
 
@@ -89,6 +100,18 @@ StaticEntity >> initialize [
 	super initialize.
 ]
 
+{ #category : 'testing' }
+StaticEntity >> isAnimatedEntity [
+
+	^false
+]
+
+{ #category : 'testing' }
+StaticEntity >> isStaticEntity [
+
+	^true
+]
+
 { #category : 'as yet unclassified' }
 StaticEntity >> rectCut: aRectangle delta: aPoint [
 	"Define el área ed corte en el sprite y el delta respecto del
@@ -102,14 +125,28 @@ StaticEntity >> rectCut: aRectangle delta: aPoint [
 ]
 
 { #category : 'actions' }
-StaticEntity >> save: aSteam [
-
-	aSteam nextPutAll: 0 asByteArray.
-	super save: aSteam
+StaticEntity >> save: aStream [
+	" Salvamos la entidad estática"
+	
+	"Indicamos con un solo byte el tipo de entidad estática"
+	GameEngine on: aStream nextPutByte: 0.
+	super save: aStream.
+	
+	"Salvamos rectCut"
+	rectCut save: aStream.
+	
+	"salvamos collider"
+	collider save: aStream.
 ]
 
 { #category : 'initialization' }
 StaticEntity >> setCollider: aCollider [
 
 	collider := aCollider.
+]
+
+{ #category : 'initialization' }
+StaticEntity >> setRectCut: aRectDelta [
+
+	rectCut := aRectDelta
 ]

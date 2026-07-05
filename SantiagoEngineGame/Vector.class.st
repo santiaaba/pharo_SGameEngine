@@ -14,10 +14,19 @@ Class {
 	#package : 'SantiagoEngineGame'
 }
 
+{ #category : 'actions api' }
+Vector class >> loadFrom: aStream [
+
+	| module direction |
+	module := GameEngine readFloatOn: aStream.
+	direction := GameEngine readFloatOn: aStream.
+	^self module: module direction: direction.
+]
+
 { #category : 'as yet unclassified' }
 Vector class >> module: aNumber direction: aNomberDirection [
 
-	^ (self new module: aNumber) direction: aNomberDirection
+	^ (self new module: (aNumber abs)) direction: aNomberDirection
 ]
 
 { #category : 'as yet unclassified' }
@@ -25,8 +34,20 @@ Vector class >> xMagnitude: magnitude direction: aRadians [
 
 	| aux |
 	aux := aRadians cos.
-	(aux = 0) ifTrue: [ ^self module: magnitude direction: aRadians ].
-	^self module: (magnitude / aRadians cos) direction: aRadians.
+	(aux = 0) ifTrue: [ ^self module: (magnitude abs) direction: aRadians ].
+	^self module: ((magnitude abs) / aRadians cos) direction: aRadians.
+]
+
+{ #category : 'accessing' }
+Vector class >> xValue: aSignedValue [
+	"Genera un vector en dirección horizontal según el
+	 valor con signo recibido por parámetro"
+	
+	(aSignedValue >= 0) ifTrue: [
+		^self module: (aSignedValue abs) direction: 0
+	] ifFalse: [
+		^self module: (aSignedValue abs) direction: Float pi
+	]
 ]
 
 { #category : 'as yet unclassified' }
@@ -34,8 +55,20 @@ Vector class >> yMagnitude: magnitude direction: aRadians [
 
 	| aux |
 	aux := aRadians sin.
-	(aux = 0) ifTrue: [ ^self module: magnitude direction: aRadians ].
-	^self module: (magnitude / aRadians sin) direction: aRadians.
+	(aux = 0) ifTrue: [ ^self module: (magnitude abs) direction: aRadians ].
+	^self module: ((magnitude abs) / aRadians sin) direction: aRadians.
+]
+
+{ #category : 'accessing' }
+Vector class >> yValue: aSignedValue [
+	"Genera un vector en dirección vertical según el
+	 valor con signo recibido por parámetro"
+	
+	(aSignedValue >= 0) ifTrue: [
+		^self module: (aSignedValue abs) direction: Float halfPi
+	] ifFalse: [
+		^self module: (aSignedValue abs) direction: Float pi + Float halfPi
+	]
 ]
 
 { #category : 'arithmetic' }
@@ -125,25 +158,34 @@ Vector >> collisionBottomLeftBetween: aRectangle and: anotherRectangle [
 	(collisionArea intersects: anotherRectangle) ifFalse: [ ^nil ].
 	
 	(anotherRectangle corner x <= aRectangle origin x) ifTrue: [
-		diff := aRectangle origin x - anotherRectangle corner x.
+		diff := aRectangle origin x - (anotherRectangle corner x).
 		vector := Vector xMagnitude: diff direction: direction.
 		p := anotherRectangle origin y - vector y.
 		(p > aRectangle corner y) ifTrue: [
 			"COLISION por ABAJO a la izquierda"
-			diff := anotherRectangle origin y - aRectangle corner y.
-			^ Vector yMagnitude: diff direction: direction.
+			diff := anotherRectangle origin y - (aRectangle corner y).
+			^ VectorCollision new: self
+				to: (Vector yMagnitude: diff direction: direction)
+				side: #bottom
+				onSide: #top.
 		].
 		(p + anotherRectangle height < aRectangle origin y) ifTrue: [ ^nil ].  "<= SIN COLISION"
-		^ vector.
+		^ VectorCollision new: self
+				to: vector
+				side: #left
+				onSide: #right.
 	] ifFalse: [
 		"Posible colisión por debajo"
-		diff := anotherRectangle origin y - aRectangle corner y.
+		diff := anotherRectangle origin y - (aRectangle corner y).
 		vector := Vector yMagnitude: diff direction: direction.
 		p := anotherRectangle origin x + vector x.
 		(p > aRectangle corner x) ifTrue: [
 			^nil
 		].
-		^vector
+		^ VectorCollision new: self
+				to: vector
+				side: #bottom
+				onSide: #top.
 	].
 ]
 
@@ -161,25 +203,34 @@ Vector >> collisionBottomRightBetween: aRectangle and: anotherRectangle [
 	
 	(anotherRectangle origin x >= aRectangle corner x) ifTrue: [
 		"COLISION por derecha"
-		diff := anotherRectangle origin x - aRectangle corner x.
+		diff := anotherRectangle origin x - (aRectangle corner x).
 		vector := Vector xMagnitude: diff direction: direction.
 		p := anotherRectangle origin y - vector y.
 		(p > aRectangle corner y) ifTrue: [
 			"COLISION por ABAJO a la derecha"
-			diff := anotherRectangle origin y - aRectangle corner y.
-			^ Vector yMagnitude: diff direction: direction.
+			diff := anotherRectangle origin y - (aRectangle corner y).
+			^ VectorCollision new: self
+				to: (Vector yMagnitude: diff direction: direction)
+				side: #bottom
+				onSide: #top.
 		].
 		(p + anotherRectangle height < aRectangle origin y) ifTrue: [ ^nil ].  "<= SIN COLISION"
-		^ vector.
+		^ VectorCollision new: self
+				to: vector
+				side: #right
+				onSide: #left.
 	] ifFalse: [
 		"Posible colisión por debajo"
-		diff := anotherRectangle origin y - aRectangle corner y.
+		diff := anotherRectangle origin y - (aRectangle corner y).
 		vector := Vector yMagnitude: diff direction: direction.
 		p := anotherRectangle corner x - vector x.
 		(p < aRectangle origin x) ifTrue: [
 			^nil
 		].
-		^vector
+		^ VectorCollision new: self
+				to: vector
+				side: #bottom
+				onSide: #top.
 	].
 ]
 
@@ -197,25 +248,34 @@ Vector >> collisionTopLeftBetween: aRectangle and: anotherRectangle [
 	
 	(anotherRectangle corner x <= aRectangle origin x) ifTrue: [
 		"COLISION por izquierda"
-		diff := aRectangle origin x - anotherRectangle corner x.
+		diff := aRectangle origin x - (anotherRectangle corner x).
 		vector := Vector xMagnitude: diff direction: direction.
 		p := anotherRectangle corner y + vector y.
 		(p < aRectangle origin y) ifTrue: [
 			"COLISION por ARRIBA a la izquierda"
-			diff := aRectangle origin y - anotherRectangle corner y.
-			^ Vector yMagnitude: diff direction: direction.
+			diff := aRectangle origin y - (anotherRectangle corner y).
+			^ VectorCollision new: self
+				to: (Vector yMagnitude: diff direction: direction)
+				side: #top
+				onSide: #bottom.
 		].
 		(p - anotherRectangle height > aRectangle corner y) ifTrue: [ ^nil ].  "<= SIN COLISION"
-		^ vector.
+		^ VectorCollision new: self
+				to: vector
+				side: #left
+				onSide: #right.
 	] ifFalse: [
 		"Posible colisión por arriba"
-		diff := aRectangle origin y - anotherRectangle corner y.
+		diff := aRectangle origin y - (anotherRectangle corner y).
 		vector := Vector yMagnitude: diff direction: direction.
 		p := anotherRectangle origin x + vector x.
 		(p > aRectangle corner x) ifTrue: [
 			^nil
 		].
-		^vector
+		^ VectorCollision new: self
+				to: vector
+				side: #top
+				onSide: #bottom.
 	].
 ]
 
@@ -233,25 +293,34 @@ Vector >> collisionTopRightBetween: aRectangle and: anotherRectangle [
 	
 	(anotherRectangle origin x >= aRectangle corner x) ifTrue: [
 		"COLISION por derecha"
-		diff := anotherRectangle origin x - aRectangle corner x.
+		diff := anotherRectangle origin x - (aRectangle corner x).
 		vector := Vector xMagnitude: diff direction: direction.
 		p := anotherRectangle corner y + vector y.
 		(p < aRectangle origin y) ifTrue: [
 			"COLISION por ARRIBA a la derecha"
-			diff := aRectangle origin y - aRectangle corner y.
-			^ Vector yMagnitude: diff direction: direction.
+			diff := aRectangle origin y - (aRectangle corner y).
+			^ VectorCollision new: self
+				to: (Vector yMagnitude: diff direction: direction)
+				side: #top
+				onSide: #bottom.
 		].
 		(p - anotherRectangle height > aRectangle corner y) ifTrue: [ ^nil ].  "<= SIN COLISION"
-		^ vector.
+		^ VectorCollision new: self
+				to: vector
+				side: #right
+				onSide: #left.
 	] ifFalse: [
 		"Posible colisión por arriba"
-		diff := aRectangle origin y - anotherRectangle corner y.
+		diff := aRectangle origin y - (anotherRectangle corner y).
 		vector := Vector yMagnitude: diff direction: direction.
 		p := anotherRectangle corner x - vector x.
 		(p < aRectangle origin x) ifTrue: [
 			^nil
 		].
-		^vector
+		^ VectorCollision new: self
+				to: vector
+				side: #top
+				onSide: #bottom.
 	].
 ]
 
@@ -286,18 +355,6 @@ Vector >> invert [
 	^ Vector module: module direction: d.
 ]
 
-{ #category : 'actions api' }
-Vector >> load: arg1 [
-
-	| tmp1 tmp2 |
-	tmp1 := (arg1 next: 4) floatAt: 1 bigEndian: true.
-	tmp2 := (arg1 next: 4) floatAt: 1 bigEndian: true.
-	module := tmp1 @ tmp2.
-	tmp1 := (arg1 next: 4) floatAt: 1 bigEndian: true.
-	tmp2 := (arg1 next: 4) floatAt: 1 bigEndian: true.
-	direction := tmp1 @ tmp2
-]
-
 { #category : 'accessing' }
 Vector >> module [
 
@@ -321,11 +378,11 @@ Vector >> movePoint: aPoint [
 ]
 
 { #category : 'actions' }
-Vector >> save: arg1 [
+Vector >> save: aStream [
 
-	arg1
-		nextPutAll: module asFloat asIEEE32BitWord asByteArray;
-		nextPutAll: direction asFloat asIEEE32BitWord asByteArray
+	GameEngine
+		on: aStream nextPutFloat: module;
+		on: aStream nextPutFloat: direction.
 ]
 
 { #category : 'as yet unclassified' }
@@ -347,14 +404,28 @@ Vector >> translateCorner: aRectangle [
 
 { #category : 'accessing - structure variables' }
 Vector >> x [
-	"Retorna la componente X del vector."
+	"Retorna la componente X del vector con signo."
 	
 	^xComponent.
 ]
 
 { #category : 'accessing - structure variables' }
+Vector >> xAbs [
+	"Retorna la componente X del vector sin signo"
+	
+	^xComponent abs.
+]
+
+{ #category : 'accessing - structure variables' }
 Vector >> y [
-	"Retorna la componente Y del vector."
+	"Retorna la componente Y del vector con signo."
 	
 	^yComponent.
+]
+
+{ #category : 'accessing - structure variables' }
+Vector >> yAbs [
+	"Retorna la componente Y del vector sin signo."
+	
+	^yComponent abs.
 ]
